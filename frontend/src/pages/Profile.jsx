@@ -11,10 +11,21 @@ export default function Profile({
 }) {
   const [error, setError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [debugStatus, setDebugStatus] = useState("");
+  const [debugHint, setDebugHint] = useState("");
+  const [showFullResumeText, setShowFullResumeText] = useState(false);
+  const previewLimit = 800;
+  const resumeText = resumeData?.resumeText || "";
+  const hasLongResumeText = resumeText.length > previewLimit;
+  const visibleResumeText = showFullResumeText || !hasLongResumeText
+    ? resumeText
+    : `${resumeText.slice(0, previewLimit)}...`;
 
   const generateProfile = async () => {
     if (!resumeData?.resumeText) {
       setError("We could not extract enough text from the uploaded file. Please go back and paste the resume text as a fallback.");
+      setDebugStatus("Generation blocked");
+      setDebugHint("No resume text is available. Upload a CV with extractable text or paste the fallback text before generating.");
       console.error("Profile generation blocked", {
         reason: "Missing resume text",
         resumeData
@@ -24,6 +35,8 @@ export default function Profile({
 
     setError("");
     setIsGenerating(true);
+    setDebugStatus("Sending request");
+    setDebugHint("Calling POST /ai/generate-profile with your parsed resume text.");
 
     console.info("Starting profile generation", {
       resumeLength: resumeData.resumeText.length,
@@ -39,6 +52,8 @@ export default function Profile({
       });
 
       onProfileGenerated(data.profile);
+      setDebugStatus("Profile generated");
+      setDebugHint("The backend returned profile JSON and the UI has stored it successfully.");
       console.info("Profile generation succeeded", {
         hasSummary: Boolean(data.profile?.summary),
         skillsCount: data.profile?.skills?.length || 0
@@ -48,6 +63,8 @@ export default function Profile({
         error: generationError
       });
       setError(generationError.message);
+      setDebugStatus("Generation failed");
+      setDebugHint("Check auth token/session, backend URL, and /ai/generate-profile response in DevTools Network.");
     } finally {
       setIsGenerating(false);
     }
@@ -78,9 +95,31 @@ export default function Profile({
             <strong>{resumeData?.parsedFromFile ? "Resume text extracted from file" : "Resume text ready for AI generation"}</strong>
           </div>
         ) : null}
+
+        <div className="profile-meta-card">
+          <span className="profile-meta-label">Debug</span>
+          <strong>{debugStatus || "Waiting for Generate Profile click"}</strong>
+        </div>
       </div>
 
       {error ? <p className="auth-error">{error}</p> : null}
+      {debugHint ? <p className="upload-hint">{debugHint}</p> : null}
+
+      {resumeText ? (
+        <div className="profile-preview-card">
+          <span className="profile-meta-label">Parsed Resume Preview</span>
+          <p>{visibleResumeText}</p>
+          {hasLongResumeText ? (
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={() => setShowFullResumeText((prev) => !prev)}
+            >
+              {showFullResumeText ? "Show less" : "Show more"}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="profile-actions">
         <button className="button button-secondary" type="button" onClick={onReloadCv}>
