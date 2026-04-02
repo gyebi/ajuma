@@ -20,6 +20,16 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "2mb" }));
 app.use(generalLimiter);
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+
+  res.on("finish", () => {
+    const durationMs = Date.now() - startedAt;
+    console.info(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
+  });
+
+  next();
+});
 
 app.get("/health", (_req, res) => {
   res.json({
@@ -30,6 +40,7 @@ app.get("/health", (_req, res) => {
 
 app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resume"), async (req, res) => {
   if (!req.file) {
+    console.error("Resume upload failed: no file provided");
     return res.status(400).json({ error: "Resume file is required." });
   }
 
@@ -52,7 +63,12 @@ app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resu
           : "Resume uploaded. PDF and DOCX are supported best right now, so legacy DOC files may need pasted text."
     });
   } catch (error) {
-    console.error("Resume parsing failed:", error);
+    console.error("Resume upload parsing failed", {
+      filename: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      error
+    });
 
     return res.status(201).json({
       filename: req.file.originalname,
@@ -74,6 +90,14 @@ app.get("/ai/ping", (_req, res) => {
 
 app.post("/ai/generate-profile", authLimiter, aiLimiter, verifyFirebaseToken, (req, res) => {
   const { resumeText = "" } = req.body;
+
+  if (!resumeText.trim()) {
+    console.error("Profile generation failed: empty resumeText payload");
+  } else {
+    console.info("Profile generation input received", {
+      characters: resumeText.length
+    });
+  }
 
   res.json({
     message: "AI profile generation placeholder.",

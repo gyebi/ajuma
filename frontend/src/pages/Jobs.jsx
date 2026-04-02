@@ -11,12 +11,20 @@ export default function Jobs({ profile, resumeData }) {
     setError("");
     setIsLoading(true);
 
+    console.info("Starting jobs fetch");
+
     try {
       await apiFetch("/jobs/sync", { method: "POST" });
 
       const res = await apiFetch("/jobs", { method: "GET" });
       setJobs(res.jobs || []);
+      console.info("Jobs fetch succeeded", {
+        jobsCount: res.jobs?.length || 0
+      });
     } catch (fetchError) {
+      console.error("Jobs fetch failed", {
+        error: fetchError
+      });
       setError(fetchError.message);
     } finally {
       setIsLoading(false);

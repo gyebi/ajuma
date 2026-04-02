@@ -6,6 +6,7 @@ export default function Profile({
   onNext,
   profile,
   resumeData,
+  onReloadCv,
   onProfileGenerated
 }) {
   const [error, setError] = useState("");
@@ -14,11 +15,20 @@ export default function Profile({
   const generateProfile = async () => {
     if (!resumeData?.resumeText) {
       setError("We could not extract enough text from the uploaded file. Please go back and paste the resume text as a fallback.");
+      console.error("Profile generation blocked", {
+        reason: "Missing resume text",
+        resumeData
+      });
       return;
     }
 
     setError("");
     setIsGenerating(true);
+
+    console.info("Starting profile generation", {
+      resumeLength: resumeData.resumeText.length,
+      parsedFromFile: Boolean(resumeData.parsedFromFile)
+    });
 
     try {
       const data = await apiFetch("/ai/generate-profile", {
@@ -29,7 +39,14 @@ export default function Profile({
       });
 
       onProfileGenerated(data.profile);
+      console.info("Profile generation succeeded", {
+        hasSummary: Boolean(data.profile?.summary),
+        skillsCount: data.profile?.skills?.length || 0
+      });
     } catch (generationError) {
+      console.error("Profile generation failed", {
+        error: generationError
+      });
       setError(generationError.message);
     } finally {
       setIsGenerating(false);
@@ -66,6 +83,9 @@ export default function Profile({
       {error ? <p className="auth-error">{error}</p> : null}
 
       <div className="profile-actions">
+        <button className="button button-secondary" type="button" onClick={onReloadCv}>
+          Reload CV
+        </button>
         <button className="button button-primary" type="button" onClick={generateProfile} disabled={isGenerating}>
           {isGenerating ? "Generating..." : "Generate Profile"}
         </button>

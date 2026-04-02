@@ -192,6 +192,11 @@ export default function App() {
               profile={profile}
               resumeData={resumeData}
               onProfileGenerated={setProfile}
+              onReloadCv={() => {
+                setResumeData(null);
+                setProfile(null);
+                setAppStep(onboardingData?.hasCv === "yes" ? "upload" : "starterCv");
+              }}
               onNext={() => setAppStep("jobs")}
             />
           ) : null}

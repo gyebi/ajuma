@@ -19,6 +19,12 @@ export default function UploadResume({ onNext }) {
     setUploadMessage("");
     setIsUploading(true);
 
+    console.info("Starting resume upload", {
+      filename: file.name,
+      size: file.size,
+      type: file.type || "unknown"
+    });
+
     try {
       const formData = new FormData();
       formData.append("resume", file);
@@ -34,7 +40,17 @@ export default function UploadResume({ onNext }) {
         parsedFromFile: Boolean(data.extractedText),
         uploadMessage: data.message || ""
       });
+
+      console.info("Resume upload completed", {
+        filename: data.filename || file.name,
+        hasParsedText: Boolean(data.extractedText),
+        message: data.message || ""
+      });
     } catch (uploadError) {
+      console.error("Resume upload failed", {
+        filename: file.name,
+        error: uploadError
+      });
       setError(uploadError.message);
     } finally {
       setIsUploading(false);
