@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import heroPortrait from "../../abigail.jpeg";
+import { auth } from "./firebase";
+import Login from "./pages/Login";
 
 const productPillars = [
   {
@@ -15,7 +19,79 @@ const productPillars = [
   }
 ];
 
+const solutionCards = [
+  {
+    eyebrow: "For New Graduates",
+    title: "Turn limited experience into a stronger first impression.",
+    description: "Ajuma AI helps early-career candidates structure projects, internships, and transferable skills into a profile that feels more employer-ready."
+  },
+  {
+    eyebrow: "For Working Professionals",
+    title: "Cut the noise and focus on roles that actually fit.",
+    description: "Instead of searching endlessly across job boards, use AI-driven matching to prioritize the openings that align with your background and ambitions."
+  },
+  {
+    eyebrow: "For Busy Job Seekers",
+    title: "Reduce repetitive work across every application cycle.",
+    description: "Move from resume to profile to opportunity faster with one workflow designed to save time and keep momentum high."
+  }
+];
+
+const pricingPlans = [
+  {
+    name: "Free",
+    price: "$0",
+    cadence: "/month",
+    description: "A clean starting point for job seekers who want to build a profile and test the Ajuma workflow.",
+    features: [
+      "Limited AI profile generation",
+      "Basic job matching",
+      "Manual job search support",
+      "Email and in-app updates"
+    ]
+  },
+  {
+    name: "Pro",
+    price: "$15",
+    cadence: "/month",
+    description: "For active job seekers who want more AI support, better matching, and stronger application momentum.",
+    featured: true,
+    features: [
+      "Expanded AI profile credits",
+      "Advanced job matching",
+      "Profile refinement workflows",
+      "Priority email support",
+      "Limited SMS alerts included"
+    ]
+  },
+  {
+    name: "Automation",
+    price: "$39",
+    cadence: "/month",
+    description: "For users who want higher limits, faster workflows, and a stronger automation layer for their job search.",
+    theme: "dark",
+    features: [
+      "Higher AI usage limits",
+      "Automation-focused workflows",
+      "Faster opportunity handling",
+      "Expanded notifications",
+      "Best fit for premium users"
+    ]
+  }
+];
+
 export default function App() {
+  const [showAuth, setShowAuth] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+
+    return unsubscribe;
+  }, []);
+
   return (
     <div className="site-shell">
       <header className="topbar">
@@ -27,13 +103,21 @@ export default function App() {
         <nav className="nav">
           <a href="#product">Product</a>
           <a href="#solutions">Solutions</a>
-          <a href="#resources">Resources</a>
           <a href="#pricing">Pricing</a>
         </nav>
 
-        <a className="signin-link" href="#signin">
-          Sign in
-        </a>
+        {currentUser ? (
+          <div className="auth-state">
+            <span className="auth-user-pill">{currentUser.email}</span>
+            <button className="signin-link" type="button" onClick={() => signOut(auth)}>
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <button className="signin-link" type="button" onClick={() => setShowAuth(true)}>
+            Sign in
+          </button>
+        )}
       </header>
 
       <main className="landing" id="hero">
@@ -53,9 +137,9 @@ export default function App() {
             </p>
 
             <div className="hero-actions">
-              <a className="button button-primary" href="#get-started">
+              <button className="button button-primary" type="button" onClick={() => setShowAuth(true)}>
                 Get Started Free
-              </a>
+              </button>
               <a className="button button-secondary" href="#demo">
                 See How It Works
               </a>
@@ -153,7 +237,86 @@ export default function App() {
             </div>
           </div>
         </section>
+
+        <section className="solutions-section" id="solutions">
+          <div className="solutions-heading">
+            <p className="section-label">Solutions</p>
+            <h2>Built for the real job-search situations people face every day.</h2>
+            <p className="solutions-intro">
+              Whether you are starting out, switching roles, or trying to move
+              faster with limited time, Ajuma AI gives you a clearer path from
+              effort to opportunity.
+            </p>
+          </div>
+
+          <div className="solutions-grid">
+            {solutionCards.map((card) => (
+              <article className="solution-card" key={card.title}>
+                <p className="solution-eyebrow">{card.eyebrow}</p>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="pricing-section" id="pricing">
+          <div className="pricing-heading">
+            <p className="section-label">Pricing</p>
+            <h2>Simple plans designed around real usage, not guesswork.</h2>
+            <p className="pricing-intro">
+              Ajuma pricing is built to cover AI generation, infrastructure,
+              and messaging costs while keeping the product accessible for job
+              seekers at different stages.
+            </p>
+          </div>
+
+          <div className="pricing-grid">
+            {pricingPlans.map((plan) => (
+              <article
+                className={`pricing-card${plan.featured ? " pricing-card-featured" : ""}${plan.theme === "dark" ? " pricing-card-dark" : ""}`}
+                key={plan.name}
+              >
+                <div className="pricing-card-top">
+                  <p className="pricing-name">{plan.name}</p>
+                  <div className="pricing-amount">
+                    <strong>{plan.price}</strong>
+                    <span>{plan.cadence}</span>
+                  </div>
+                  <p className="pricing-description">{plan.description}</p>
+                </div>
+
+                <ul className="pricing-list">
+                  {plan.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+
+                <a
+                  className={`button ${plan.featured ? "button-primary" : "button-secondary"}`}
+                  href="#hero"
+                >
+                  {plan.featured ? "Choose Pro" : `Choose ${plan.name}`}
+                </a>
+              </article>
+            ))}
+          </div>
+
+          <div className="pricing-note">
+            <p>
+              SMS-heavy usage should be handled as an add-on or capped usage
+              layer so pricing stays sustainable as Ajuma grows.
+            </p>
+          </div>
+        </section>
       </main>
+
+      {showAuth ? (
+        <Login
+          onClose={() => setShowAuth(false)}
+          onLogin={() => setShowAuth(false)}
+        />
+      ) : null}
     </div>
   );
 }
