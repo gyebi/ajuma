@@ -8,6 +8,7 @@ import {
   authLimiter,
   generalLimiter
 } from "./middleware/rateLimit.js";
+import { getJobsForUser, syncJobsForUser } from "./services/jobsService.js";
 import { extractResumeText } from "./services/resumeParser.js";
 
 const app = express();
@@ -111,17 +112,42 @@ app.post("/ai/generate-profile", authLimiter, aiLimiter, verifyFirebaseToken, (r
   });
 });
 
-app.post("/jobs/sync", authLimiter, verifyFirebaseToken, (_req, res) => {
-  res.json({
-    message: "Job sync placeholder. Connect Arbeitnow ingestion and deduplication here.",
-    synced: 0
-  });
+app.post("/jobs/sync", authLimiter, verifyFirebaseToken, async (req, res) => {
+  try {
+    const { jobs, syncedAt, source } = await syncJobsForUser(req.user.uid);
+
+    return res.json({
+      message: "Jobs synced successfully.",
+      synced: jobs.length,
+      source,
+      syncedAt
+    });
+  } catch (error) {
+    console.error("Jobs sync failed", {
+      userId: req.user.uid,
+      error
+    });
+
+    return res.status(502).json({
+      error: "Unable to sync jobs from Arbeitnow right now. Please try again."
+    });
+  }
 });
 
-app.get("/jobs", authLimiter, verifyFirebaseToken, (_req, res) => {
-  res.json({
-    jobs: [],
-    message: "Recommended next endpoint from the project docs."
+app.get("/jobs", authLimiter, verifyFirebaseToken, (req, res) => {
+  const cached = getJobsForUser(req.user.uid);
+
+  if (!cached) {
+    return res.json({
+      jobs: [],
+      message: "No synced jobs found yet. Run /jobs/sync first."
+    });
+  }
+
+  return res.json({
+    jobs: cached.jobs,
+    syncedAt: cached.syncedAt,
+    source: cached.source
   });
 });
 
