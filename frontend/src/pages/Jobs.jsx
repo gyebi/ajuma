@@ -24,23 +24,61 @@ export default function Jobs({ profile, resumeData }) {
   };
 
   return (
-    <div>
-      <h2>Job Listings</h2>
-      {resumeData?.filename ? <p>Resume: {resumeData.filename}</p> : null}
-      {profile?.summary ? <p>Profile summary: {profile.summary}</p> : null}
+    <section className="app-panel">
+      <div className="app-panel-header">
+        <p className="section-label">Matched Jobs</p>
+        <h1 className="app-title">Review roles aligned to your profile.</h1>
+        <p className="app-subtitle">
+          Your profile is ready. Use the button below to load opportunities and
+          review what Ajuma AI is surfacing for you.
+        </p>
+      </div>
 
-      {error ? <p>{error}</p> : null}
+      <div className="jobs-summary">
+        {resumeData?.filename ? (
+          <div className="profile-meta-card">
+            <span className="profile-meta-label">Resume</span>
+            <strong>{resumeData.filename}</strong>
+          </div>
+        ) : null}
 
-      <button onClick={fetchJobs} disabled={isLoading}>
-        {isLoading ? "Loading Jobs..." : "Fetch Jobs"}
-      </button>
+        {profile?.summary ? (
+          <div className="profile-meta-card">
+            <span className="profile-meta-label">Profile Summary</span>
+            <strong>{profile.summary}</strong>
+          </div>
+        ) : null}
+      </div>
 
-      {jobs.map((job) => (
-        <div key={job.id}>
-          <h4>{job.title}</h4>
-          <p>{job.company}</p>
-        </div>
-      ))}
-    </div>
+      {error ? <p className="auth-error">{error}</p> : null}
+
+      <div className="profile-actions">
+        <button className="button button-primary" type="button" onClick={fetchJobs} disabled={isLoading}>
+          {isLoading ? "Loading Jobs..." : "Fetch Jobs"}
+        </button>
+      </div>
+
+      <div className="jobs-grid">
+        {jobs.length ? (
+          jobs.map((job) => (
+            <article className="job-card" key={job.id}>
+              <span className="profile-meta-label">Matched Role</span>
+              <h3>{job.title}</h3>
+              <p>{job.company}</p>
+              <div className="job-card-actions">
+                <button className="button button-secondary" type="button">Save</button>
+                <button className="button button-primary" type="button">Apply</button>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="job-card job-card-empty">
+            <span className="profile-meta-label">Next Step</span>
+            <h3>No jobs loaded yet.</h3>
+            <p>Click the button above to fetch matching opportunities.</p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

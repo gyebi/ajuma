@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import heroPortrait from "../../abigail.jpeg";
 import { auth } from "./firebase";
+import Jobs from "./pages/Jobs";
 import Login from "./pages/Login";
+import Onboarding from "./pages/Onboarding";
+import Profile from "./pages/Profile";
+import StarterCv from "./pages/StarterCv";
+import UploadResume from "./pages/UploadResume";
 
 const productPillars = [
   {
@@ -83,6 +88,10 @@ const pricingPlans = [
 export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [appStep, setAppStep] = useState("onboarding");
+  const [onboardingData, setOnboardingData] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -91,6 +100,109 @@ export default function App() {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setAppStep("onboarding");
+      setOnboardingData(null);
+      setResumeData(null);
+      setProfile(null);
+      return;
+    }
+
+    const saved = window.localStorage.getItem(`ajuma-flow:${currentUser.uid}`);
+
+    if (!saved) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(saved);
+      setAppStep(parsed.appStep || "onboarding");
+      setOnboardingData(parsed.onboardingData || null);
+      setResumeData(parsed.resumeData || null);
+      setProfile(parsed.profile || null);
+    } catch (_error) {
+      window.localStorage.removeItem(`ajuma-flow:${currentUser.uid}`);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      `ajuma-flow:${currentUser.uid}`,
+      JSON.stringify({
+        appStep,
+        onboardingData,
+        resumeData,
+        profile
+      })
+    );
+  }, [appStep, currentUser, onboardingData, profile, resumeData]);
+
+  if (currentUser) {
+    return (
+      <div className="app-shell">
+        <header className="app-topbar">
+          <div>
+            <p className="section-label">Ajuma AI Workflow</p>
+            <h1 className="app-shell-title">Welcome back{onboardingData?.fullName ? `, ${onboardingData.fullName}` : ""}.</h1>
+          </div>
+
+          <button className="signin-link" type="button" onClick={() => signOut(auth)}>
+            Sign out
+          </button>
+        </header>
+
+        <main className="app-main">
+          {appStep === "onboarding" ? (
+            <Onboarding
+              initialData={onboardingData}
+              onContinue={(data) => {
+                setOnboardingData(data);
+                setAppStep(data.hasCv === "yes" ? "upload" : "starterCv");
+              }}
+            />
+          ) : null}
+
+          {appStep === "upload" ? (
+            <UploadResume
+              onNext={(data) => {
+                setResumeData(data);
+                setAppStep("profile");
+              }}
+            />
+          ) : null}
+
+          {appStep === "starterCv" ? (
+            <StarterCv
+              onboardingData={onboardingData}
+              onNext={(data) => {
+                setResumeData(data);
+                setAppStep("profile");
+              }}
+            />
+          ) : null}
+
+          {appStep === "profile" ? (
+            <Profile
+              profile={profile}
+              resumeData={resumeData}
+              onProfileGenerated={setProfile}
+              onNext={() => setAppStep("jobs")}
+            />
+          ) : null}
+
+          {appStep === "jobs" ? (
+            <Jobs profile={profile} resumeData={resumeData} />
+          ) : null}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="site-shell">

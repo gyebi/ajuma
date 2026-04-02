@@ -8,6 +8,7 @@ import {
   authLimiter,
   generalLimiter
 } from "./middleware/rateLimit.js";
+import { extractResumeText } from "./services/resumeParser.js";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -27,16 +28,41 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resume"), (req, res) => {
+app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resume"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "Resume file is required." });
   }
 
-  return res.status(201).json({
-    filename: req.file.originalname,
-    size: req.file.size,
-    message: "Resume received. Parsing pipeline can be added here."
-  });
+  try {
+    const extractedText = await extractResumeText(req.file);
+    const hasParsedText = Boolean(extractedText);
+    const filename = req.file.originalname.toLowerCase();
+    const supportedFormat = filename.endsWith(".pdf") || filename.endsWith(".docx");
+
+    return res.status(201).json({
+      filename: req.file.originalname,
+      size: req.file.size,
+      extractedText,
+      hasParsedText,
+      supportedFormat,
+      message: hasParsedText
+        ? "Resume uploaded and parsed successfully."
+        : supportedFormat
+          ? "Resume uploaded, but text extraction returned no usable content. Paste text only if needed."
+          : "Resume uploaded. PDF and DOCX are supported best right now, so legacy DOC files may need pasted text."
+    });
+  } catch (error) {
+    console.error("Resume parsing failed:", error);
+
+    return res.status(201).json({
+      filename: req.file.originalname,
+      size: req.file.size,
+      extractedText: "",
+      hasParsedText: false,
+      supportedFormat: false,
+      message: "Resume uploaded, but parsing failed. Please paste resume text as a fallback."
+    });
+  }
 });
 
 app.get("/ai/ping", (_req, res) => {

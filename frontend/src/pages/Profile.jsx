@@ -13,7 +13,7 @@ export default function Profile({
 
   const generateProfile = async () => {
     if (!resumeData?.resumeText) {
-      setError("Add resume text during upload so profile generation has content to work with.");
+      setError("We could not extract enough text from the uploaded file. Please go back and paste the resume text as a fallback.");
       return;
     }
 
@@ -37,22 +37,98 @@ export default function Profile({
   };
 
   return (
-    <div>
-      <h2>Your AI Profile</h2>
-      {resumeData?.filename ? <p>Uploaded resume: {resumeData.filename}</p> : null}
-      {resumeData?.resumeText ? <p>Resume text ready for profile generation.</p> : null}
+    <section className="app-panel">
+      <div className="app-panel-header">
+        <p className="section-label">Profile Review</p>
+        <h1 className="app-title">Shape your AI profile before job matching.</h1>
+        <p className="app-subtitle">
+          Review what Ajuma AI creates from your CV or starter profile, then
+          move forward when it feels right.
+        </p>
+      </div>
 
-      {error ? <p>{error}</p> : null}
+      <div className="profile-meta">
+        {resumeData?.filename ? (
+          <div className="profile-meta-card">
+            <span className="profile-meta-label">Source</span>
+            <strong>{resumeData.filename}</strong>
+          </div>
+        ) : null}
 
-      <button onClick={generateProfile} disabled={isGenerating}>
-        {isGenerating ? "Generating..." : "Generate Profile"}
-      </button>
+        {resumeData?.resumeText ? (
+          <div className="profile-meta-card">
+            <span className="profile-meta-label">Status</span>
+            <strong>{resumeData?.parsedFromFile ? "Resume text extracted from file" : "Resume text ready for AI generation"}</strong>
+          </div>
+        ) : null}
+      </div>
 
-      {profile && (
-        <pre>{JSON.stringify(profile, null, 2)}</pre>
-      )}
+      {error ? <p className="auth-error">{error}</p> : null}
 
-      {profile && <button onClick={onNext}>Find Jobs</button>}
-    </div>
+      <div className="profile-actions">
+        <button className="button button-primary" type="button" onClick={generateProfile} disabled={isGenerating}>
+          {isGenerating ? "Generating..." : "Generate Profile"}
+        </button>
+      </div>
+
+      {profile ? (
+        <div className="profile-preview">
+          <div className="profile-preview-card">
+            <span className="profile-meta-label">Summary</span>
+            <p>{profile.summary || "No summary generated yet."}</p>
+          </div>
+
+          <div className="profile-preview-grid">
+            <div className="profile-preview-card">
+              <span className="profile-meta-label">Skills</span>
+              {profile.skills?.length ? (
+                <ul className="inline-list">
+                  {profile.skills.map((skill) => (
+                    <li key={skill}>{skill}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No skills listed yet.</p>
+              )}
+            </div>
+
+            <div className="profile-preview-card">
+              <span className="profile-meta-label">Experience</span>
+              {profile.experience?.length ? (
+                <ul className="inline-list">
+                  {profile.experience.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No experience items listed yet.</p>
+              )}
+            </div>
+
+            <div className="profile-preview-card">
+              <span className="profile-meta-label">Education</span>
+              {profile.education?.length ? (
+                <ul className="inline-list">
+                  {profile.education.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No education items listed yet.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="profile-actions">
+            <button className="button button-secondary" type="button" onClick={generateProfile} disabled={isGenerating}>
+              Regenerate
+            </button>
+            <button className="button button-primary" type="button" onClick={onNext}>
+              See Matching Jobs
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
