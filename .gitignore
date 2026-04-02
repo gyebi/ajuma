@@ -1,0 +1,11 @@
+node_modules
+dist
+.codex
+.env
+.env.local
+backend/.env
+frontend/.env
+coverage
+*.log
+config/serviceAccountKey.json
+backend/config/serviceAccountKey.json
