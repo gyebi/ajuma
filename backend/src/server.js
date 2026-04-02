@@ -114,12 +114,16 @@ app.post("/ai/generate-profile", authLimiter, aiLimiter, verifyFirebaseToken, (r
 
 app.post("/jobs/sync", authLimiter, verifyFirebaseToken, async (req, res) => {
   try {
-    const { jobs, syncedAt, source } = await syncJobsForUser(req.user.uid);
+    const { jobs, matchingMethod, source, syncedAt } = await syncJobsForUser(req.user.uid, {
+      profile: req.body?.profile,
+      resumeText: req.body?.resumeText
+    });
 
     return res.json({
       message: "Jobs synced successfully.",
       synced: jobs.length,
       source,
+      matchingMethod,
       syncedAt
     });
   } catch (error) {
@@ -147,7 +151,8 @@ app.get("/jobs", authLimiter, verifyFirebaseToken, (req, res) => {
   return res.json({
     jobs: cached.jobs,
     syncedAt: cached.syncedAt,
-    source: cached.source
+    source: cached.source,
+    matchingMethod: cached.matchingMethod
   });
 });
 

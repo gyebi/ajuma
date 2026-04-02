@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { apiFetch } from "../services/api";
 
-export default function Jobs({ profile, resumeData }) {
+export default function Jobs({ onBack, profile, resumeData }) {
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +14,13 @@ export default function Jobs({ profile, resumeData }) {
     console.info("Starting jobs fetch");
 
     try {
-      await apiFetch("/jobs/sync", { method: "POST" });
+      await apiFetch("/jobs/sync", {
+        method: "POST",
+        body: JSON.stringify({
+          profile,
+          resumeText: resumeData?.resumeText || ""
+        })
+      });
 
       const res = await apiFetch("/jobs", { method: "GET" });
       setJobs(res.jobs || []);
@@ -61,6 +67,9 @@ export default function Jobs({ profile, resumeData }) {
       {error ? <p className="auth-error">{error}</p> : null}
 
       <div className="profile-actions">
+        <button className="button button-secondary" type="button" onClick={onBack}>
+          Back
+        </button>
         <button className="button button-primary" type="button" onClick={fetchJobs} disabled={isLoading}>
           {isLoading ? "Loading Jobs..." : "Fetch Jobs"}
         </button>
@@ -73,6 +82,12 @@ export default function Jobs({ profile, resumeData }) {
               <span className="profile-meta-label">Matched Role</span>
               <h3>{job.title}</h3>
               <p>{job.company}</p>
+              {typeof job.matchScore === "number" ? (
+                <p><strong>Match Score:</strong> {job.matchScore}/100</p>
+              ) : null}
+              {Array.isArray(job.matchReasons) && job.matchReasons.length ? (
+                <p>{job.matchReasons.join(" • ")}</p>
+              ) : null}
               <div className="job-card-actions">
                 <button className="button button-secondary" type="button">Save</button>
                 <button className="button button-primary" type="button">Apply</button>
