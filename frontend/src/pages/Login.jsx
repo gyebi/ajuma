@@ -38,7 +38,7 @@ export default function Login({ onClose, onLogin }) {
           ×
         </button>
 
-        <p className="section-label">Account Access</p>
+        <p className="section-label section-label-account">Account Access</p>
         <h2 id="auth-title">
           {mode === "signin" ? "Sign in to Ajuma AI" : "Create your Ajuma AI account"}
         </h2>

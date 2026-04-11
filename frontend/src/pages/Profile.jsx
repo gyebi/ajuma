@@ -73,7 +73,7 @@ export default function Profile({
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label">Profile Review</p>
+        <p className="section-label section-label-profile">Profile Review</p>
         <h1 className="app-title">Shape your AI profile before job matching.</h1>
         <p className="app-subtitle">
           Review what Ajuma AI creates from your CV or starter profile, then

@@ -50,7 +50,7 @@ export default function Onboarding({ initialData, onContinue }) {
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label">Onboarding</p>
+        <p className="section-label section-label-onboarding">Onboarding</p>
         <h1 className="app-title">Set up your job search in one page.</h1>
         <p className="app-subtitle">
           Tell us just enough to personalize your profile, matching, and CV path

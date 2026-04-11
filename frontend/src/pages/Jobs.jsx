@@ -1,11 +1,23 @@
 // src/pages/Jobs.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "../services/api";
 
 export default function Jobs({ onBack, profile, resumeData }) {
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [savedJobIds, setSavedJobIds] = useState(() => {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem("ajuma:saved-jobs") || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem("ajuma:saved-jobs", JSON.stringify(savedJobIds));
+  }, [savedJobIds]);
 
   const fetchJobs = async () => {
     setError("");
@@ -37,10 +49,27 @@ export default function Jobs({ onBack, profile, resumeData }) {
     }
   };
 
+  const toggleSaveJob = (jobId) => {
+    setSavedJobIds((current) => (
+      current.includes(jobId)
+        ? current.filter((id) => id !== jobId)
+        : [...current, jobId]
+    ));
+  };
+
+  const applyToJob = (job) => {
+    if (!job.url) {
+      setError("This job does not have an application link yet.");
+      return;
+    }
+
+    window.open(job.url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label">Matched Jobs</p>
+        <p className="section-label section-label-jobs">Matched Jobs</p>
         <h1 className="app-title">Review roles aligned to your profile.</h1>
         <p className="app-subtitle">
           Your profile is ready. Use the button below to load opportunities and
@@ -89,8 +118,16 @@ export default function Jobs({ onBack, profile, resumeData }) {
                 <p>{job.matchReasons.join(" • ")}</p>
               ) : null}
               <div className="job-card-actions">
-                <button className="button button-secondary" type="button">Save</button>
-                <button className="button button-primary" type="button">Apply</button>
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={() => toggleSaveJob(job.id)}
+                >
+                  {savedJobIds.includes(job.id) ? "Saved" : "Save"}
+                </button>
+                <button className="button button-primary" type="button" onClick={() => applyToJob(job)}>
+                  Apply
+                </button>
               </div>
             </article>
           ))

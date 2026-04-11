@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ajuma AI favicon">
+  <defs>
+    <linearGradient id="ajumaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0b1320" />
+  <circle cx="32" cy="32" r="24" fill="url(#ajumaGrad)" />
+  <path d="M32 14L46 50H39L35.8 41.5H28.2L25 50H18L32 14ZM30.5 35.5H33.5L32 31L30.5 35.5Z" fill="#ffffff" />
+</svg>

@@ -60,7 +60,7 @@ export default function UploadResume({ onNext }) {
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label">Resume Upload</p>
+        <p className="section-label section-label-upload">Resume Upload</p>
         <h1 className="app-title">Bring in your existing CV.</h1>
         <p className="app-subtitle">
           Upload your resume to keep moving quickly. If parsing is not fully

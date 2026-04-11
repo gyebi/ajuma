@@ -7,8 +7,8 @@ export default function StarterCv({ onboardingData, onNext }) {
   const [experience, setExperience] = useState("");
   const [strengths, setStrengths] = useState("");
 
-  function generateStarterCv() {
-    const resumeText = [
+  function buildResumeText() {
+    return [
       `Name: ${onboardingData.fullName}`,
       `Location: ${onboardingData.location}`,
       `Target role: ${onboardingData.targetRole}`,
@@ -24,7 +24,27 @@ export default function StarterCv({ onboardingData, onNext }) {
     ]
       .filter(Boolean)
       .join("\n");
+  }
 
+  function downloadStarterCv() {
+    const resumeText = buildResumeText();
+    const safeName = (onboardingData.fullName || "candidate")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    const filename = `${safeName || "candidate"}-starter-cv.txt`;
+    const blob = new Blob([resumeText], { type: "text/plain;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  function generateStarterCv() {
+    const resumeText = buildResumeText();
     onNext({
       filename: "Ajuma AI Starter CV",
       size: resumeText.length,
@@ -35,7 +55,7 @@ export default function StarterCv({ onboardingData, onNext }) {
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label">Starter CV</p>
+        <p className="section-label section-label-starter-cv">Starter CV</p>
         <h1 className="app-title">Create your first professional CV.</h1>
         <p className="app-subtitle">
           We already have your direction. Add a little more detail and Ajuma
@@ -70,9 +90,14 @@ export default function StarterCv({ onboardingData, onNext }) {
         <textarea rows="4" value={strengths} onChange={(event) => setStrengths(event.target.value)} placeholder="What are you good at and what kind of work interests you?" />
       </label>
 
-      <button className="button button-primary app-cta" type="button" onClick={generateStarterCv}>
-        Generate My CV
-      </button>
+      <div className="profile-actions">
+        <button className="button button-secondary" type="button" onClick={downloadStarterCv}>
+          Download Starter CV
+        </button>
+        <button className="button button-primary" type="button" onClick={generateStarterCv}>
+          Generate My CV
+        </button>
+      </div>
     </section>
   );
 }

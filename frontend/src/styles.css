@@ -4,6 +4,12 @@
   font-family: "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --page-bg: #f4efe8;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.9);
+  --border-soft: rgba(17, 17, 17, 0.08);
+  --text-muted: rgba(17, 17, 17, 0.68);
+  --heading-tight: -0.055em;
 }
 
 * {
@@ -20,7 +26,7 @@ body {
   min-height: 100vh;
   background:
     radial-gradient(circle at top right, rgba(87, 159, 255, 0.12), transparent 24%),
-    #f6f4ef;
+    linear-gradient(180deg, #faf7f2 0%, var(--page-bg) 100%);
 }
 
 a {
@@ -40,7 +46,7 @@ button {
 
 .site-shell {
   min-height: 100vh;
-  padding: 20px;
+  padding: 20px 20px 48px;
 }
 
 .app-shell {
@@ -316,6 +322,9 @@ button {
 }
 
 .topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 12;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -323,13 +332,20 @@ button {
   max-width: 1240px;
   margin: 0 auto 18px;
   padding: 14px 18px;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 30px rgba(18, 30, 43, 0.06);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  font-size: 1rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .brand-mark {
@@ -350,7 +366,8 @@ button {
   margin-left: auto;
   margin-right: 12px;
   color: rgba(17, 17, 17, 0.75);
-  font-size: 0.95rem;
+  font-size: 0.96rem;
+  font-weight: 600;
 }
 
 .signin-link {
@@ -387,9 +404,9 @@ button {
 .hero-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
-  gap: 26px;
+  gap: 28px;
   align-items: stretch;
-  min-height: calc(100vh - 140px);
+  min-height: calc(100vh - 172px);
 }
 
 .hero-copy,
@@ -401,7 +418,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 26px 30px 26px 18px;
+  padding: 34px 34px 34px 8px;
 }
 
 .trust-pill {
@@ -409,10 +426,14 @@ button {
   align-items: center;
   gap: 10px;
   width: fit-content;
-  margin-bottom: 38px;
-  padding: 8px 0;
+  margin-bottom: 28px;
+  padding: 10px 14px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
   color: rgba(17, 17, 17, 0.78);
-  font-size: 0.98rem;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .trust-icon {
@@ -431,18 +452,19 @@ p {
 }
 
 h1 {
-  max-width: 8ch;
-  margin-bottom: 26px;
-  font-size: clamp(3.3rem, 8vw, 5.9rem);
-  line-height: 0.93;
-  letter-spacing: -0.06em;
+  max-width: 11ch;
+  margin-bottom: 22px;
+  font-size: clamp(3.2rem, 7vw, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.065em;
 }
 
 .hero-text {
-  max-width: 35rem;
-  margin-bottom: 28px;
-  color: rgba(17, 17, 17, 0.72);
-  font-size: 1.08rem;
+  max-width: 37rem;
+  margin-bottom: 30px;
+  color: var(--text-muted);
+  font-size: clamp(1.05rem, 1.5vw, 1.18rem);
+  line-height: 1.7;
 }
 
 .hero-actions {
@@ -451,12 +473,40 @@ h1 {
   gap: 14px;
 }
 
+.hero-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.hero-stat {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 30px rgba(17, 17, 17, 0.04);
+}
+
+.hero-stat strong {
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.hero-stat span {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 56px;
-  padding: 0 22px;
+  padding: 0 24px;
   border-radius: 999px;
   font-weight: 700;
   transition: transform 180ms ease, opacity 180ms ease;
@@ -467,22 +517,25 @@ h1 {
 }
 
 .button-primary {
-  background: #111111;
+  background: linear-gradient(135deg, #111111, #27364a);
   color: #ffffff;
 }
 
 .button-secondary {
-  background: #ece9e2;
+  background: rgba(255, 255, 255, 0.78);
   color: #111111;
+  border: 1px solid rgba(17, 17, 17, 0.08);
 }
 
 .hero-visual {
   position: relative;
   overflow: hidden;
   min-height: 720px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   background:
     radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28), transparent 26%),
     linear-gradient(180deg, #2e79bb 0%, #5ba8ea 100%);
+  box-shadow: 0 30px 70px rgba(18, 49, 81, 0.18);
 }
 
 .hero-image {
@@ -560,8 +613,8 @@ h1 {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 24px;
   align-items: center;
-  margin-top: 28px;
-  padding: 22px 8px 0;
+  margin-top: 36px;
+  padding: 28px 8px 0;
 }
 
 .metrics-copy h2,
@@ -570,25 +623,117 @@ h1 {
 }
 
 .metrics-copy h2 {
-  max-width: 16ch;
+  max-width: 18ch;
   margin-bottom: 0;
-  font-size: clamp(1.9rem, 4vw, 3.1rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 .section-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.45rem 0.9rem;
   margin-bottom: 12px;
-  color: rgba(17, 17, 17, 0.58);
+  border: 1px solid var(--section-label-border, rgba(14, 116, 144, 0.18));
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    var(--section-label-bg-start, rgba(15, 118, 110, 0.12)),
+    var(--section-label-bg-end, rgba(56, 189, 248, 0.2))
+  );
+  color: var(--section-label-text, #0f4f61);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
   text-transform: uppercase;
 }
 
+.section-label-workflow {
+  --section-label-bg-start: rgba(14, 165, 233, 0.16);
+  --section-label-bg-end: rgba(99, 102, 241, 0.2);
+  --section-label-border: rgba(79, 70, 229, 0.18);
+  --section-label-text: #284294;
+}
+
+.section-label-insights {
+  --section-label-bg-start: rgba(45, 212, 191, 0.16);
+  --section-label-bg-end: rgba(34, 197, 94, 0.18);
+  --section-label-border: rgba(13, 148, 136, 0.2);
+  --section-label-text: #0f6b63;
+}
+
+.section-label-product {
+  --section-label-bg-start: rgba(56, 189, 248, 0.16);
+  --section-label-bg-end: rgba(125, 211, 252, 0.22);
+  --section-label-border: rgba(2, 132, 199, 0.16);
+  --section-label-text: #0b5f88;
+}
+
+.section-label-solutions {
+  --section-label-bg-start: rgba(129, 140, 248, 0.16);
+  --section-label-bg-end: rgba(167, 139, 250, 0.2);
+  --section-label-border: rgba(99, 102, 241, 0.18);
+  --section-label-text: #4b4296;
+}
+
+.section-label-pricing {
+  --section-label-bg-start: rgba(251, 191, 36, 0.18);
+  --section-label-bg-end: rgba(249, 115, 22, 0.18);
+  --section-label-border: rgba(245, 158, 11, 0.2);
+  --section-label-text: #9a5212;
+}
+
+.section-label-onboarding {
+  --section-label-bg-start: rgba(16, 185, 129, 0.14);
+  --section-label-bg-end: rgba(45, 212, 191, 0.2);
+  --section-label-border: rgba(13, 148, 136, 0.18);
+  --section-label-text: #0f766e;
+}
+
+.section-label-account {
+  --section-label-bg-start: rgba(59, 130, 246, 0.14);
+  --section-label-bg-end: rgba(96, 165, 250, 0.22);
+  --section-label-border: rgba(37, 99, 235, 0.18);
+  --section-label-text: #1d4ed8;
+}
+
+.section-label-profile {
+  --section-label-bg-start: rgba(244, 114, 182, 0.14);
+  --section-label-bg-end: rgba(192, 132, 252, 0.18);
+  --section-label-border: rgba(219, 39, 119, 0.16);
+  --section-label-text: #9d2f72;
+}
+
+.section-label-starter-cv {
+  --section-label-bg-start: rgba(251, 146, 60, 0.14);
+  --section-label-bg-end: rgba(250, 204, 21, 0.18);
+  --section-label-border: rgba(234, 88, 12, 0.16);
+  --section-label-text: #a04b11;
+}
+
+.section-label-upload {
+  --section-label-bg-start: rgba(6, 182, 212, 0.14);
+  --section-label-bg-end: rgba(34, 211, 238, 0.2);
+  --section-label-border: rgba(8, 145, 178, 0.18);
+  --section-label-text: #0e7490;
+}
+
+.section-label-jobs {
+  --section-label-bg-start: rgba(168, 85, 247, 0.14);
+  --section-label-bg-end: rgba(59, 130, 246, 0.18);
+  --section-label-border: rgba(124, 58, 237, 0.16);
+  --section-label-text: #5b35b1;
+}
+
 .product-section {
-  margin-top: 70px;
-  padding: 40px 8px 10px;
+  margin-top: 86px;
+  padding: 44px 8px 10px;
 }
 
 .product-heading {
@@ -598,18 +743,19 @@ h1 {
 }
 
 .product-heading h2 {
-  max-width: 14ch;
+  max-width: 16ch;
   margin-bottom: 0;
-  font-size: clamp(2.1rem, 5vw, 3.6rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  line-height: 1;
+  letter-spacing: var(--heading-tight);
 }
 
 .product-intro {
   max-width: 42rem;
   margin-bottom: 0;
-  color: rgba(17, 17, 17, 0.72);
-  font-size: 1.04rem;
+  color: var(--text-muted);
+  font-size: 1.08rem;
+  line-height: 1.72;
 }
 
 .product-layout {
@@ -621,8 +767,8 @@ h1 {
 
 .product-showcase,
 .product-pillar {
-  border: 1px solid rgba(17, 17, 17, 0.08);
-  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
   box-shadow: 0 18px 40px rgba(17, 17, 17, 0.05);
 }
 
@@ -660,7 +806,7 @@ h1 {
 .workflow-card {
   padding: 20px;
   border-radius: 20px;
-  background: #f7f4ee;
+  background: rgba(247, 244, 238, 0.96);
 }
 
 .workflow-card-accent {
@@ -700,8 +846,8 @@ h1 {
 }
 
 .solutions-section {
-  margin-top: 72px;
-  padding: 38px 8px 20px;
+  margin-top: 84px;
+  padding: 40px 8px 20px;
 }
 
 .solutions-heading {
@@ -711,18 +857,19 @@ h1 {
 }
 
 .solutions-heading h2 {
-  max-width: 14ch;
+  max-width: 16ch;
   margin-bottom: 0;
-  font-size: clamp(2.1rem, 5vw, 3.5rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
+  font-size: clamp(2.2rem, 5vw, 3.7rem);
+  line-height: 1;
+  letter-spacing: var(--heading-tight);
 }
 
 .solutions-intro {
   max-width: 42rem;
   margin-bottom: 0;
-  color: rgba(17, 17, 17, 0.72);
-  font-size: 1.04rem;
+  color: var(--text-muted);
+  font-size: 1.08rem;
+  line-height: 1.72;
 }
 
 .solutions-grid {
@@ -734,7 +881,7 @@ h1 {
 .solution-card {
   min-height: 260px;
   padding: 24px;
-  border: 1px solid rgba(17, 17, 17, 0.08);
+  border: 1px solid var(--border-soft);
   border-radius: 26px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(243, 239, 232, 0.88)),
@@ -764,7 +911,7 @@ h1 {
 }
 
 .pricing-section {
-  margin-top: 72px;
+  margin-top: 84px;
   padding: 38px 8px 48px;
 }
 
@@ -775,18 +922,19 @@ h1 {
 }
 
 .pricing-heading h2 {
-  max-width: 13ch;
+  max-width: 16ch;
   margin-bottom: 0;
-  font-size: clamp(2.1rem, 5vw, 3.5rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
+  font-size: clamp(2.2rem, 5vw, 3.7rem);
+  line-height: 1;
+  letter-spacing: var(--heading-tight);
 }
 
 .pricing-intro {
   max-width: 42rem;
   margin-bottom: 0;
-  color: rgba(17, 17, 17, 0.72);
-  font-size: 1.04rem;
+  color: var(--text-muted);
+  font-size: 1.08rem;
+  line-height: 1.72;
 }
 
 .pricing-grid {
@@ -800,7 +948,7 @@ h1 {
   flex-direction: column;
   gap: 22px;
   padding: 26px;
-  border: 1px solid rgba(17, 17, 17, 0.08);
+  border: 1px solid var(--border-soft);
   border-radius: 28px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(243, 239, 232, 0.92)),
@@ -876,6 +1024,38 @@ h1 {
   padding: 0 4px;
   color: rgba(17, 17, 17, 0.6);
   font-size: 0.95rem;
+}
+
+.cta-section {
+  padding: 12px 8px 24px;
+}
+
+.cta-card {
+  display: grid;
+  gap: 18px;
+  padding: 32px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(93, 177, 255, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 239, 232, 0.96));
+  box-shadow: 0 22px 50px rgba(17, 17, 17, 0.06);
+}
+
+.cta-card h2 {
+  max-width: 16ch;
+  margin-bottom: 0;
+  font-size: clamp(2rem, 4.2vw, 3.3rem);
+  line-height: 1;
+  letter-spacing: var(--heading-tight);
+}
+
+.cta-text {
+  max-width: 40rem;
+  margin-bottom: 0;
+  color: var(--text-muted);
+  font-size: 1.04rem;
+  line-height: 1.7;
 }
 
 .auth-overlay {
@@ -1063,6 +1243,10 @@ h1 {
     min-height: auto;
   }
 
+  .hero-summary {
+    grid-template-columns: 1fr;
+  }
+
   .onboarding-grid,
   .cv-choice-options {
     grid-template-columns: 1fr;
@@ -1105,6 +1289,8 @@ h1 {
 
   .topbar {
     gap: 14px;
+    top: 8px;
+    border-radius: 20px;
   }
 
   .app-topbar {
@@ -1126,6 +1312,15 @@ h1 {
 
   .hero-actions {
     flex-direction: column;
+  }
+
+  .hero-copy {
+    padding-top: 12px;
+  }
+
+  .trust-pill {
+    margin-bottom: 22px;
+    font-size: 0.88rem;
   }
 
   .button {
@@ -1164,5 +1359,9 @@ h1 {
   .pricing-section {
     margin-top: 56px;
     padding-inline: 0;
+  }
+
+  .cta-card {
+    padding: 24px;
   }
 }
