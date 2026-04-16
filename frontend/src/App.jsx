@@ -171,6 +171,7 @@ export default function App() {
 
           {appStep === "profile" ? (
             <Profile
+              onboardingData={onboardingData}
               profile={profile}
               resumeData={resumeData}
               onProfileGenerated={setProfile}

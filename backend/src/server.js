@@ -9,6 +9,10 @@ import {
   generalLimiter
 } from "./middleware/rateLimit.js";
 import { getJobsForUser, syncJobsForUser } from "./services/jobsService.js";
+import {
+  generateProfileFromResume,
+  ProfileGenerationError
+} from "./services/profileService.js";
 import { extractResumeText } from "./services/resumeParser.js";
 
 const app = express();
@@ -89,27 +93,52 @@ app.get("/ai/ping", (_req, res) => {
   });
 });
 
-app.post("/ai/generate-profile", authLimiter, aiLimiter, verifyFirebaseToken, (req, res) => {
-  const { resumeText = "" } = req.body;
+app.post("/ai/generate-profile", authLimiter, aiLimiter, verifyFirebaseToken, async (req, res) => {
+  const { onboarding = {}, resumeText = "" } = req.body;
 
   if (!resumeText.trim()) {
     console.error("Profile generation failed: empty resumeText payload");
-  } else {
-    console.info("Profile generation input received", {
-      characters: resumeText.length
+    return res.status(400).json({
+      error: "Resume text is required to generate a profile."
     });
   }
 
-  res.json({
-    message: "AI profile generation placeholder.",
-    inputPreview: resumeText.slice(0, 140),
-    profile: {
-      summary: "Connect OpenAI here to produce strict JSON profile output.",
-      skills: [],
-      experience: [],
-      education: []
-    }
+  console.info("Profile generation input received", {
+    userId: req.user.uid,
+    characters: resumeText.length,
+    targetRole: onboarding?.targetRole || "not provided"
   });
+
+  try {
+    const profile = await generateProfileFromResume(resumeText, onboarding);
+
+    return res.json({
+      message: "Profile generated successfully.",
+      profile
+    });
+  } catch (error) {
+    console.error("Profile generation failed", {
+      userId: req.user.uid,
+      code: error.code,
+      error
+    });
+
+    if (error instanceof ProfileGenerationError && error.code === "OPENAI_NOT_CONFIGURED") {
+      return res.status(503).json({
+        error: "OpenAI is not configured yet. Add OPENAI_API_KEY to the backend environment."
+      });
+    }
+
+    if (error instanceof ProfileGenerationError && error.code === "EMPTY_RESUME_TEXT") {
+      return res.status(400).json({
+        error: "Resume text is required to generate a profile."
+      });
+    }
+
+    return res.status(502).json({
+      error: "Unable to generate a profile right now. Please try again."
+    });
+  }
 });
 
 app.post("/jobs/sync", authLimiter, verifyFirebaseToken, async (req, res) => {

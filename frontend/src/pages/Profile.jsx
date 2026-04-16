@@ -3,6 +3,7 @@ import { useState } from "react";
 import { apiFetch } from "../services/api";
 
 export default function Profile({
+  onboardingData,
   onNext,
   profile,
   resumeData,
@@ -36,17 +37,19 @@ export default function Profile({
     setError("");
     setIsGenerating(true);
     setDebugStatus("Sending request");
-    setDebugHint("Calling POST /ai/generate-profile with your parsed resume text.");
+    setDebugHint("Calling POST /ai/generate-profile with your parsed resume text and onboarding context.");
 
     console.info("Starting profile generation", {
       resumeLength: resumeData.resumeText.length,
-      parsedFromFile: Boolean(resumeData.parsedFromFile)
+      parsedFromFile: Boolean(resumeData.parsedFromFile),
+      targetRole: onboardingData?.targetRole || ""
     });
 
     try {
       const data = await apiFetch("/ai/generate-profile", {
         method: "POST",
         body: JSON.stringify({
+          onboarding: onboardingData,
           resumeText: resumeData.resumeText
         })
       });
@@ -132,6 +135,13 @@ export default function Profile({
 
       {profile ? (
         <div className="profile-preview">
+          {profile.headline ? (
+            <div className="profile-preview-card">
+              <span className="profile-meta-label">Headline</span>
+              <p>{profile.headline}</p>
+            </div>
+          ) : null}
+
           <div className="profile-preview-card">
             <span className="profile-meta-label">Summary</span>
             <p>{profile.summary || "No summary generated yet."}</p>
@@ -177,6 +187,43 @@ export default function Profile({
               )}
             </div>
           </div>
+
+          {(profile.strengths?.length || profile.suggestedRoles?.length || profile.missingInfo?.length) ? (
+            <div className="profile-preview-grid">
+              {profile.strengths?.length ? (
+                <div className="profile-preview-card">
+                  <span className="profile-meta-label">Strengths</span>
+                  <ul className="inline-list">
+                    {profile.strengths.map((strength) => (
+                      <li key={strength}>{strength}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {profile.suggestedRoles?.length ? (
+                <div className="profile-preview-card">
+                  <span className="profile-meta-label">Suggested Roles</span>
+                  <ul className="inline-list">
+                    {profile.suggestedRoles.map((role) => (
+                      <li key={role}>{role}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {profile.missingInfo?.length ? (
+                <div className="profile-preview-card">
+                  <span className="profile-meta-label">Helpful Follow-up</span>
+                  <ul className="inline-list">
+                    {profile.missingInfo.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="profile-actions">
             <button className="button button-secondary" type="button" onClick={generateProfile} disabled={isGenerating}>
