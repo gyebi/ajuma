@@ -1,23 +1,19 @@
 // src/pages/Jobs.jsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiFetch } from "../services/api";
 
-export default function Jobs({ onBack, profile, resumeData }) {
+export default function Jobs({
+  favoriteJobs,
+  onBack,
+  onGoToFavorites,
+  onToggleFavorite,
+  profile,
+  resumeData
+}) {
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [savedJobIds, setSavedJobIds] = useState(() => {
-    try {
-      const parsed = JSON.parse(window.localStorage.getItem("ajuma:saved-jobs") || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_error) {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    window.localStorage.setItem("ajuma:saved-jobs", JSON.stringify(savedJobIds));
-  }, [savedJobIds]);
+  const favoriteJobIds = new Set(favoriteJobs.map((job) => job.id));
 
   const fetchJobs = async () => {
     setError("");
@@ -47,14 +43,6 @@ export default function Jobs({ onBack, profile, resumeData }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleSaveJob = (jobId) => {
-    setSavedJobIds((current) => (
-      current.includes(jobId)
-        ? current.filter((id) => id !== jobId)
-        : [...current, jobId]
-    ));
   };
 
   const applyToJob = (job) => {
@@ -99,6 +87,9 @@ export default function Jobs({ onBack, profile, resumeData }) {
         <button className="button button-secondary" type="button" onClick={onBack}>
           Back
         </button>
+        <button className="button button-secondary" type="button" onClick={onGoToFavorites}>
+          My Favorites ({favoriteJobs.length})
+        </button>
         <button className="button button-primary" type="button" onClick={fetchJobs} disabled={isLoading}>
           {isLoading ? "Loading Jobs..." : "Fetch Jobs"}
         </button>
@@ -106,31 +97,45 @@ export default function Jobs({ onBack, profile, resumeData }) {
 
       <div className="jobs-grid">
         {jobs.length ? (
-          jobs.map((job) => (
-            <article className="job-card" key={job.id}>
-              <span className="profile-meta-label">Matched Role</span>
-              <h3>{job.title}</h3>
-              <p>{job.company}</p>
-              {typeof job.matchScore === "number" ? (
-                <p><strong>Match Score:</strong> {job.matchScore}/100</p>
-              ) : null}
-              {Array.isArray(job.matchReasons) && job.matchReasons.length ? (
-                <p>{job.matchReasons.join(" • ")}</p>
-              ) : null}
-              <div className="job-card-actions">
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={() => toggleSaveJob(job.id)}
-                >
-                  {savedJobIds.includes(job.id) ? "Saved" : "Save"}
-                </button>
-                <button className="button button-primary" type="button" onClick={() => applyToJob(job)}>
-                  Apply
-                </button>
-              </div>
-            </article>
-          ))
+          jobs.map((job) => {
+            const isFavorite = favoriteJobIds.has(job.id);
+
+            return (
+              <article className="job-card" key={job.id}>
+                <div className="job-card-header">
+                  <span className="profile-meta-label">Matched Role</span>
+                  <button
+                    className={`favorite-button${isFavorite ? " favorite-button-active" : ""}`}
+                    type="button"
+                    onClick={() => onToggleFavorite(job)}
+                    aria-label={`${isFavorite ? "Remove" : "Add"} ${job.title} ${isFavorite ? "from" : "to"} favorites`}
+                  >
+                    <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
+                  </button>
+                </div>
+                <h3>{job.title}</h3>
+                <p>{job.company}</p>
+                {typeof job.matchScore === "number" ? (
+                  <p><strong>Match Score:</strong> {job.matchScore}/100</p>
+                ) : null}
+                {Array.isArray(job.matchReasons) && job.matchReasons.length ? (
+                  <p>{job.matchReasons.join(" • ")}</p>
+                ) : null}
+                <div className="job-card-actions">
+                  <button
+                    className="button button-secondary"
+                    type="button"
+                    onClick={() => onToggleFavorite(job)}
+                  >
+                    {isFavorite ? "Favorited" : "Favorite"}
+                  </button>
+                  <button className="button button-primary" type="button" onClick={() => applyToJob(job)}>
+                    Apply
+                  </button>
+                </div>
+              </article>
+            );
+          })
         ) : (
           <div className="job-card job-card-empty">
             <span className="profile-meta-label">Next Step</span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import Jobs from "./pages/Jobs";
+import FavoriteJobs from "./pages/FavoriteJobs";
 import LandingPage from "./pages/LandingPage";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
@@ -15,11 +16,22 @@ export default function App() {
   const [onboardingData, setOnboardingData] = useState(null);
   const [resumeData, setResumeData] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [favoriteJobs, setFavoriteJobs] = useState([]);
 
   function resetToOnboarding() {
     setResumeData(null);
     setProfile(null);
     setAppStep("onboarding");
+  }
+
+  function toggleFavoriteJob(job) {
+    setFavoriteJobs((current) => {
+      const isFavorite = current.some((favoriteJob) => favoriteJob.id === job.id);
+
+      return isFavorite
+        ? current.filter((favoriteJob) => favoriteJob.id !== job.id)
+        : [{ ...job, favoritedAt: new Date().toISOString() }, ...current];
+    });
   }
 
   useEffect(() => {
@@ -36,12 +48,18 @@ export default function App() {
       setOnboardingData(null);
       setResumeData(null);
       setProfile(null);
+      setFavoriteJobs([]);
       return;
     }
 
     const saved = window.localStorage.getItem(`ajuma-flow:${currentUser.uid}`);
 
     if (!saved) {
+      setAppStep("onboarding");
+      setOnboardingData(null);
+      setResumeData(null);
+      setProfile(null);
+      setFavoriteJobs([]);
       return;
     }
 
@@ -50,6 +68,9 @@ export default function App() {
       const restoredOnboarding = parsed.onboardingData || null;
       const restoredResume = parsed.resumeData || null;
       const restoredProfile = parsed.profile || null;
+      const restoredFavoriteJobs = Array.isArray(parsed.favoriteJobs)
+        ? parsed.favoriteJobs
+        : [];
 
       // Infer the safest next step so returning users can continue quickly.
       const inferredStep = restoredProfile
@@ -73,6 +94,7 @@ export default function App() {
       setOnboardingData(restoredOnboarding);
       setResumeData(restoredResume);
       setProfile(restoredProfile);
+      setFavoriteJobs(restoredFavoriteJobs);
     } catch (_error) {
       window.localStorage.removeItem(`ajuma-flow:${currentUser.uid}`);
     }
@@ -89,10 +111,11 @@ export default function App() {
         appStep,
         onboardingData,
         resumeData,
-        profile
+        profile,
+        favoriteJobs
       })
     );
-  }, [appStep, currentUser, onboardingData, profile, resumeData]);
+  }, [appStep, currentUser, favoriteJobs, onboardingData, profile, resumeData]);
 
   if (currentUser) {
     return (
@@ -106,6 +129,9 @@ export default function App() {
           <div className="profile-actions">
             <button className="button button-secondary" type="button" onClick={resetToOnboarding}>
               Reset to Onboarding
+            </button>
+            <button className="button button-secondary" type="button" onClick={() => setAppStep("favorites")}>
+              My Favorites ({favoriteJobs.length})
             </button>
             <button className="signin-link" type="button" onClick={() => signOut(auth)}>
               Sign out
@@ -159,9 +185,25 @@ export default function App() {
 
           {appStep === "jobs" ? (
             <Jobs
+              favoriteJobs={favoriteJobs}
               profile={profile}
               resumeData={resumeData}
               onBack={() => setAppStep("profile")}
+              onGoToFavorites={() => setAppStep("favorites")}
+              onToggleFavorite={toggleFavoriteJob}
+            />
+          ) : null}
+
+          {appStep === "favorites" ? (
+            <FavoriteJobs
+              favoriteJobs={favoriteJobs}
+              onApply={(job) => {
+                if (job.url) {
+                  window.open(job.url, "_blank", "noopener,noreferrer");
+                }
+              }}
+              onBack={() => setAppStep(profile ? "jobs" : "onboarding")}
+              onRemoveFavorite={toggleFavoriteJob}
             />
           ) : null}
         </main>

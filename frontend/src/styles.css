@@ -303,6 +303,38 @@ button {
   letter-spacing: -0.03em;
 }
 
+.job-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.favorite-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(17, 17, 17, 0.54);
+  font-size: 1.22rem;
+  line-height: 1;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.favorite-button:hover {
+  transform: translateY(-1px);
+}
+
+.favorite-button-active {
+  border-color: rgba(220, 38, 38, 0.24);
+  background: rgba(254, 226, 226, 0.92);
+  color: #c42135;
+}
+
 .job-card p,
 .profile-preview-card p,
 .profile-meta-card strong {
