@@ -31,12 +31,6 @@ export const solutionCards = [
   }
 ];
 
-export const websiteStats = [
-  { value: "1 clear profile", label: "built from your CV, goals, and strengths" },
-  { value: "3 simple steps", label: "from background details to better-fit opportunities" },
-  { value: "Less friction", label: "so you can focus on roles worth your time" }
-];
-
 export const pricingPlans = [
   {
     name: "Free",

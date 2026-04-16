@@ -1,5 +1,4 @@
 import heroPortrait from "../../../../abigail.jpeg";
-import { websiteStats } from "../../content/homepage";
 
 export default function HeroSection({ onSignIn }) {
   return (
@@ -13,26 +12,19 @@ export default function HeroSection({ onSignIn }) {
         <h1>Turn your experience into a stronger profile and a more focused job search.</h1>
 
         <p className="hero-text">
-          Ajuma AI helps job seekers organize their background, present their strengths
-          more clearly, and focus on opportunities that feel more relevant from the start.
+          Ajuma AI helps young graduates and first-time job seekers turn their education and experiences into clear, confident profiles—and discover opportunities that actually fit them from day one.
         </p>
 
-        <div className="hero-actions">
+         <p className="hero-text">
+          Ajuma AI helps skilled professionals level up their careers, reposition their experience, and transition into better, more rewarding opportunities. </p>
+
+        <div className="hero-actions hero-actions-lower">
           <button className="button button-primary" type="button" onClick={onSignIn}>
             Get Started
           </button>
           <a className="button button-secondary" href="#how-it-works">
             See How It Works
           </a>
-        </div>
-
-        <div className="hero-summary">
-          {websiteStats.map((stat) => (
-            <div className="hero-stat" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
         </div>
       </div>
 

@@ -2,7 +2,6 @@ import CTASection from "../components/home/CTASection";
 import HeroSection from "../components/home/HeroSection";
 import HowItWorksSection from "../components/home/HowItWorksSection";
 import PricingSection from "../components/home/PricingSection";
-import ProofSection from "../components/home/ProofSection";
 import SolutionsSection from "../components/home/SolutionsSection";
 import Navbar from "../components/Navbar";
 import Login from "./Login";
@@ -14,7 +13,6 @@ export default function LandingPage({ currentUser, showAuth, onCloseAuth, onSign
 
       <main className="landing" id="hero">
         <HeroSection onSignIn={onSignIn} />
-        <ProofSection />
         <HowItWorksSection />
         <SolutionsSection />
         <PricingSection />
