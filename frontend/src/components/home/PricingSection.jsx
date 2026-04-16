@@ -5,10 +5,9 @@ export default function PricingSection() {
     <section className="pricing-section" id="pricing">
       <div className="pricing-heading">
         <p className="section-label section-label-pricing">Pricing</p>
-        <h2>Simple pricing built around how people actually use the product.</h2>
+        <h2>Simple pricing</h2>
         <p className="pricing-intro">
-          The goal is to keep Ajuma accessible for job seekers at different stages
-          while supporting the AI, infrastructure, and product support behind it.
+          The goal is to keep Ajuma accessible for job seekers at different stages on their journey.
         </p>
       </div>
 
@@ -44,10 +43,7 @@ export default function PricingSection() {
       </div>
 
       <div className="pricing-note">
-        <p>
-          High-volume messaging or automation can grow into add-ons later, keeping the
-          core plans easier to understand today.
-        </p>
+      
       </div>
     </section>
   );
