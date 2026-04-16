@@ -4,7 +4,7 @@ export default function HowItWorksSection() {
   return (
     <section className="product-section" id="how-it-works">
       <div className="product-heading">
-        <p className="section-label section-label-product">Product</p>
+        <p className="section-label section-label-product">How It Works</p>
         <h2>A simple workflow for turning background into direction.</h2>
         <p className="product-intro">
           Ajuma brings the most important parts of the job-search journey into one

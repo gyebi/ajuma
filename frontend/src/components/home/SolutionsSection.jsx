@@ -4,7 +4,7 @@ export default function SolutionsSection() {
   return (
     <section className="solutions-section" id="who-its-for">
       <div className="solutions-heading">
-        <p className="section-label section-label-solutions">Solutions</p>
+        <p className="section-label section-label-solutions">Who It's For</p>
         <h2>Built for real job-search situations, not just ideal ones.</h2>
         <p className="solutions-intro">
           Whether someone is starting out, changing direction, or actively applying,

@@ -606,10 +606,10 @@ h1 {
 }
 
 .section-label-product {
-  --section-label-bg-start: rgba(56, 189, 248, 0.16);
-  --section-label-bg-end: rgba(125, 211, 252, 0.22);
-  --section-label-border: rgba(2, 132, 199, 0.16);
-  --section-label-text: #0b5f88;
+  --section-label-bg-start: rgba(34, 211, 238, 0.24);
+  --section-label-bg-end: rgba(74, 222, 128, 0.26);
+  --section-label-border: rgba(20, 184, 166, 0.28);
+  --section-label-text: #087968;
 }
 
 .section-label-solutions {
