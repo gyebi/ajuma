@@ -2,6 +2,22 @@
 import { useState } from "react";
 import { apiFetch } from "../services/api";
 
+function formatPostedAge(job) {
+  if (typeof job.ageInDays !== "number") {
+    return "Posted date unavailable";
+  }
+
+  if (job.ageInDays === 0) {
+    return "Posted today";
+  }
+
+  if (job.ageInDays === 1) {
+    return "Posted 1 day ago";
+  }
+
+  return `Posted ${job.ageInDays} days ago`;
+}
+
 export default function Jobs({
   favoriteJobs,
   onBack,
@@ -117,6 +133,14 @@ export default function Jobs({
                 </div>
                 <h3>{job.title}</h3>
                 <p>{job.company}</p>
+                {job.freshnessLabel ? (
+                  <div className="job-freshness-row">
+                    <span className={`job-freshness-badge job-freshness-${job.freshnessLabel.toLowerCase().replace(/\s+/g, "-")}`}>
+                      {job.freshnessLabel}
+                    </span>
+                    <span className="job-freshness-meta">{formatPostedAge(job)}</span>
+                  </div>
+                ) : null}
                 {typeof job.matchScore === "number" ? (
                   <p><strong>Match Score:</strong> {job.matchScore}/100</p>
                 ) : null}

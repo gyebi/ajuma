@@ -342,6 +342,50 @@ button {
   color: rgba(17, 17, 17, 0.74);
 }
 
+.job-freshness-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.job-freshness-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.job-freshness-recent {
+  background: rgba(99, 196, 121, 0.2);
+  color: #1e6a2b;
+}
+
+.job-freshness-likely-active {
+  background: rgba(255, 211, 92, 0.24);
+  color: #825300;
+}
+
+.job-freshness-needs-verification {
+  background: rgba(255, 184, 108, 0.2);
+  color: #8a4f00;
+}
+
+.job-freshness-possibly-stale {
+  background: rgba(166, 60, 56, 0.14);
+  color: #8f302d;
+}
+
+.job-freshness-meta {
+  color: rgba(17, 17, 17, 0.56);
+  font-size: 0.92rem;
+}
+
 .job-card-actions {
   display: flex;
   gap: 12px;

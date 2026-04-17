@@ -4,6 +4,7 @@ const ARBEITNOW_API_URL = "https://www.arbeitnow.com/api/job-board-api";
 const MAX_SYNC_PAGES = Number(process.env.JOBS_SYNC_PAGES || 2);
 const MAX_RETURNED_JOBS = Number(process.env.JOBS_RESULT_LIMIT || 50);
 const MIN_MATCH_SCORE = Number(process.env.JOBS_MIN_MATCH_SCORE || 90);
+const STALE_JOB_DAYS = Number(process.env.JOBS_STALE_DAYS || 21);
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const AI_RERANK_POOL_SIZE = Number(process.env.JOBS_AI_RERANK_POOL_SIZE || 25);
 const AI_ENABLED = Boolean(process.env.OPENAI_API_KEY);
@@ -67,6 +68,73 @@ function normalizeJob(rawJob = {}) {
     tags: Array.isArray(rawJob.tags) ? rawJob.tags : [],
     description,
     postedAt: rawJob.created_at || null
+  };
+}
+
+function getJobAgeInDays(postedAt) {
+  if (!postedAt) {
+    return null;
+  }
+
+  const postedTime = new Date(postedAt).getTime();
+
+  if (Number.isNaN(postedTime)) {
+    return null;
+  }
+
+  const ageMs = Date.now() - postedTime;
+
+  if (ageMs < 0) {
+    return 0;
+  }
+
+  return Math.floor(ageMs / (1000 * 60 * 60 * 24));
+}
+
+function getFreshnessSignals(postedAt) {
+  const ageInDays = getJobAgeInDays(postedAt);
+
+  if (ageInDays === null) {
+    return {
+      ageInDays: null,
+      freshnessLabel: "Needs verification",
+      freshnessReason: "Posting date is unavailable",
+      freshnessScoreAdjustment: -4
+    };
+  }
+
+  if (ageInDays <= 3) {
+    return {
+      ageInDays,
+      freshnessLabel: "Recent",
+      freshnessReason: "Posted within the last 3 days",
+      freshnessScoreAdjustment: 8
+    };
+  }
+
+  if (ageInDays <= 10) {
+    return {
+      ageInDays,
+      freshnessLabel: "Likely active",
+      freshnessReason: "Posted within the last 10 days",
+      freshnessScoreAdjustment: 4
+    };
+  }
+
+  if (ageInDays <= STALE_JOB_DAYS) {
+    return {
+      ageInDays,
+      freshnessLabel: "Needs verification",
+      freshnessReason: "Older posting that may still be open",
+      freshnessScoreAdjustment: -2
+    };
+  }
+
+  return {
+    ageInDays,
+    freshnessLabel: "Possibly stale",
+    freshnessReason: `Posted more than ${STALE_JOB_DAYS} days ago`,
+    freshnessScoreAdjustment: -10
   };
 }
 
@@ -216,13 +284,15 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
     const descriptionOverlap = countOverlap(candidateTokens, jobDescriptionTokens);
     const skillOverlap = countOverlap(skillTokens, jobCombinedTokens);
     const preferenceSignals = scorePreferenceSignals(job, candidate);
+    const freshnessSignals = getFreshnessSignals(job.postedAt);
 
     const weightedScore = (
       (titleOverlap * 3) +
       (tagOverlap * 2) +
       (descriptionOverlap * 1) +
       (skillOverlap * 2) +
-      preferenceSignals.bonus
+      preferenceSignals.bonus +
+      freshnessSignals.freshnessScoreAdjustment
     );
 
     const normalizedScore = Math.max(0, Math.min(99, Math.round(weightedScore * 3.5)));
@@ -242,6 +312,9 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
         reasons.push(reason);
       }
     });
+    if (reasons.length < 3 && freshnessSignals.freshnessReason) {
+      reasons.push(freshnessSignals.freshnessReason);
+    }
     if (!reasons.length) {
       reasons.push("General relevance from overall profile context");
     }
@@ -250,6 +323,9 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
       ...job,
       matchScore: normalizedScore,
       matchReasons: reasons.slice(0, 3),
+      freshnessLabel: freshnessSignals.freshnessLabel,
+      freshnessReason: freshnessSignals.freshnessReason,
+      ageInDays: freshnessSignals.ageInDays,
       matchingMethod: "heuristic"
     };
   });
@@ -356,6 +432,9 @@ async function rerankJobsWithOpenAI(seedRankedJobs = [], matchInput = {}) {
         ...job,
         matchScore: Math.max(0, Math.min(100, Math.round(ai.matchScore))),
         matchReasons: ai.matchReasons.length ? ai.matchReasons : job.matchReasons,
+        freshnessLabel: job.freshnessLabel,
+        freshnessReason: job.freshnessReason,
+        ageInDays: job.ageInDays,
         matchingMethod: "openai"
       };
     })
