@@ -5,7 +5,7 @@ export default function SolutionsSection() {
     <section className="solutions-section" id="who-its-for">
       <div className="solutions-heading">
         <p className="section-label section-label-solutions">Who It's For</p>
-        <h2>Built for real job-search situations, not just ideal ones.</h2>
+        <h2>Built for real job-search situations.</h2>
         <p className="solutions-intro">
           Whether someone is starting out, changing direction, or actively applying,
           Ajuma is built to reduce confusion and help them move with more confidence.

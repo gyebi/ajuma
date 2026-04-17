@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { apiFetchForm } from "../services/api";
 
-export default function UploadResume({ onNext }) {
+export default function UploadResume({ onNext, onNeedsManualEntry }) {
   const [file, setFile] = useState(null);
-  const [resumeText, setResumeText] = useState("");
   const [uploadMessage, setUploadMessage] = useState("");
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -33,13 +32,22 @@ export default function UploadResume({ onNext }) {
         method: "POST"
       });
 
-      onNext({
+      const nextResumeData = {
         filename: data.filename || file.name,
         size: data.size || file.size,
-        resumeText: data.extractedText || resumeText.trim(),
+        resumeText: data.extractedText || "",
         parsedFromFile: Boolean(data.extractedText),
+        hasParsedText: Boolean(data.extractedText),
+        supportedFormat: Boolean(data.supportedFormat),
+        extractionFailed: !data.extractedText,
         uploadMessage: data.message || ""
-      });
+      };
+
+      if (data.extractedText) {
+        onNext(nextResumeData);
+      } else {
+        onNeedsManualEntry(nextResumeData);
+      }
 
       console.info("Resume upload completed", {
         filename: data.filename || file.name,
@@ -63,9 +71,7 @@ export default function UploadResume({ onNext }) {
         <p className="section-label section-label-upload">Resume Upload</p>
         <h1 className="app-title">Bring in your existing CV.</h1>
         <p className="app-subtitle">
-          Upload your resume to keep moving quickly. If parsing is not fully
-          connected yet, you can paste the resume text below so Ajuma still has
-          strong material for profile generation.
+          Upload your resume by clicking on cv. 
         </p>
       </div>
 
@@ -77,22 +83,11 @@ export default function UploadResume({ onNext }) {
             accept=".pdf,.doc,.docx"
             onChange={(event) => setFile(event.target.files[0])}
           />
-          <span className="upload-badge">CV</span>
+          <span className="upload-badge">Upload Resume </span>
           <strong>{file ? file.name : "Choose a resume file"}</strong>
-          <p>
-            Upload PDF, DOC, or DOCX to continue with your existing professional
-            history.
-          </p>
-        </label>
-
-        <label className="app-field app-field-full">
-          <span>Resume text fallback</span>
-          <textarea
-            placeholder="Usually you will not need this. Paste resume text only if extraction misses important details."
-            rows="10"
-            value={resumeText}
-            onChange={(event) => setResumeText(event.target.value)}
-          />
+          {!file ? (
+            <p>Upload a PDF, DOC, or DOCX file.</p>
+          ) : null}
         </label>
 
         {uploadMessage ? <p className="upload-hint">{uploadMessage}</p> : null}

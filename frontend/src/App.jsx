@@ -73,15 +73,18 @@ export default function App() {
         : [];
 
       // Infer the safest next step so returning users can continue quickly.
+      const hasUsableResumeText = Boolean(restoredResume?.resumeText);
       const inferredStep = restoredProfile
         ? "jobs"
-        : restoredResume
+        : hasUsableResumeText
           ? "profile"
-          : restoredOnboarding?.hasCv === "yes"
-            ? "upload"
-            : restoredOnboarding
-              ? "starterCv"
-              : "onboarding";
+          : restoredResume?.extractionFailed
+            ? "starterCv"
+            : restoredOnboarding?.hasCv === "yes"
+              ? "upload"
+              : restoredOnboarding
+                ? "starterCv"
+                : "onboarding";
 
       const savedStep = parsed.appStep;
       const shouldUseInferredStep = !savedStep || (
@@ -156,12 +159,18 @@ export default function App() {
                 setResumeData(data);
                 setAppStep("profile");
               }}
+              onNeedsManualEntry={(data) => {
+                setResumeData(data);
+                setProfile(null);
+                setAppStep("starterCv");
+              }}
             />
           ) : null}
 
           {appStep === "starterCv" ? (
             <StarterCv
               onboardingData={onboardingData}
+              resumeData={resumeData}
               onNext={(data) => {
                 setResumeData(data);
                 setAppStep("profile");

@@ -64,8 +64,8 @@ app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resu
       message: hasParsedText
         ? "Resume uploaded and parsed successfully."
         : supportedFormat
-          ? "Resume uploaded, but text extraction returned no usable content. Paste text only if needed."
-          : "Resume uploaded. PDF and DOCX are supported best right now, so legacy DOC files may need pasted text."
+          ? "Resume uploaded, but we could not extract enough usable text. Continue to the manual CV step to add your details."
+          : "Resume uploaded. PDF and DOCX are supported best right now, so continue to the manual CV step if this file does not parse cleanly."
     });
   } catch (error) {
     console.error("Resume upload parsing failed", {
@@ -81,7 +81,7 @@ app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resu
       extractedText: "",
       hasParsedText: false,
       supportedFormat: false,
-      message: "Resume uploaded, but parsing failed. Please paste resume text as a fallback."
+      message: "Resume uploaded, but parsing failed. Continue to the manual CV step to add your details."
     });
   }
 });

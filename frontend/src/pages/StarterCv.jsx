@@ -1,11 +1,12 @@
 import { useState } from "react";
 
-export default function StarterCv({ onboardingData, onNext }) {
+export default function StarterCv({ onboardingData, onNext, resumeData }) {
   const [school, setSchool] = useState("");
   const [major, setMajor] = useState("");
   const [projects, setProjects] = useState("");
   const [experience, setExperience] = useState("");
   const [strengths, setStrengths] = useState("");
+  const isRecoveryFlow = Boolean(resumeData?.extractionFailed);
 
   function buildResumeText() {
     return [
@@ -46,9 +47,14 @@ export default function StarterCv({ onboardingData, onNext }) {
   function generateStarterCv() {
     const resumeText = buildResumeText();
     onNext({
-      filename: "Ajuma AI Starter CV",
+      filename: isRecoveryFlow
+        ? resumeData?.filename || "Uploaded resume"
+        : "Ajuma AI Starter CV",
       size: resumeText.length,
-      resumeText
+      resumeText,
+      parsedFromFile: false,
+      hasParsedText: true,
+      uploadMessage: isRecoveryFlow ? resumeData?.uploadMessage || "" : ""
     });
   }
 
@@ -56,12 +62,24 @@ export default function StarterCv({ onboardingData, onNext }) {
     <section className="app-panel">
       <div className="app-panel-header">
         <p className="section-label section-label-starter-cv">Starter CV</p>
-        <h1 className="app-title">Create your first professional CV.</h1>
+        <h1 className="app-title">
+          {isRecoveryFlow ? "Add your experience manually." : "Create your first professional CV."}
+        </h1>
         <p className="app-subtitle">
-          We already have your direction. Add a little more detail and Ajuma
-          will turn it into a usable starter profile.
+          {isRecoveryFlow
+            ? "We could not read enough text from your uploaded resume. Add the key details here and Ajuma will keep moving."
+            : "We already have your direction. Add a little more detail and Ajuma will turn it into a usable starter profile."}
         </p>
       </div>
+
+      {isRecoveryFlow && resumeData?.filename ? (
+        <div className="profile-meta">
+          <div className="profile-meta-card">
+            <span className="profile-meta-label">Uploaded File</span>
+            <strong>{resumeData.filename}</strong>
+          </div>
+        </div>
+      ) : null}
 
       <div className="onboarding-grid">
         <label className="app-field">

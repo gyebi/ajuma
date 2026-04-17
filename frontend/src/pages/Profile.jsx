@@ -24,9 +24,9 @@ export default function Profile({
 
   const generateProfile = async () => {
     if (!resumeData?.resumeText) {
-      setError("We could not extract enough text from the uploaded file. Please go back and paste the resume text as a fallback.");
+      setError("We do not have enough resume text yet. Go back and add your experience manually before generating your profile.");
       setDebugStatus("Generation blocked");
-      setDebugHint("No resume text is available. Upload a CV with extractable text or paste the fallback text before generating.");
+      setDebugHint("No resume text is available. Return to the previous step and complete the manual CV details first.");
       console.error("Profile generation blocked", {
         reason: "Missing resume text",
         resumeData
