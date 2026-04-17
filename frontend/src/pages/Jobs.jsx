@@ -1,5 +1,5 @@
 // src/pages/Jobs.jsx
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../services/api";
 
 function formatPostedAge(job) {
@@ -30,9 +30,10 @@ export default function Jobs({
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const hasAutoFetchedRef = useRef(false);
   const favoriteJobIds = new Set(favoriteJobs.map((job) => job.id));
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setError("");
     setIsLoading(true);
 
@@ -61,7 +62,7 @@ export default function Jobs({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onboardingData, profile, resumeData]);
 
   const applyToJob = (job) => {
     if (!job.url) {
@@ -72,14 +73,23 @@ export default function Jobs({
     window.open(job.url, "_blank", "noopener,noreferrer");
   };
 
+  useEffect(() => {
+    if (hasAutoFetchedRef.current) {
+      return;
+    }
+
+    hasAutoFetchedRef.current = true;
+    fetchJobs();
+  }, [fetchJobs]);
+
   return (
     <section className="app-panel">
       <div className="app-panel-header">
         <p className="section-label section-label-jobs">Matched Jobs</p>
         <h1 className="app-title">Review roles aligned to your profile.</h1>
         <p className="app-subtitle">
-          Your profile is ready. Use the button below to load opportunities and
-          review what Ajuma AI is surfacing for you.
+          Your profile is ready. Ajuma is pulling matching opportunities for
+          you now.
         </p>
       </div>
 
@@ -109,7 +119,7 @@ export default function Jobs({
           My Favorites ({favoriteJobs.length})
         </button>
         <button className="button button-primary" type="button" onClick={fetchJobs} disabled={isLoading}>
-          {isLoading ? "Loading Jobs..." : "Fetch Jobs"}
+          {isLoading ? "Loading Jobs..." : "Refresh Jobs"}
         </button>
       </div>
 
@@ -165,8 +175,12 @@ export default function Jobs({
         ) : (
           <div className="job-card job-card-empty">
             <span className="profile-meta-label">Next Step</span>
-            <h3>No jobs loaded yet.</h3>
-            <p>Click the button above to fetch matching opportunities.</p>
+            <h3>{isLoading ? "Finding matching jobs..." : "No strong matches yet."}</h3>
+            <p>
+              {isLoading
+                ? "Ajuma is searching for roles that fit your profile and preferences."
+                : "Try refreshing jobs after adjusting your profile, target role, or preferences."}
+            </p>
           </div>
         )}
       </div>

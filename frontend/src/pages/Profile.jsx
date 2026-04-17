@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../services/api";
 
 export default function Profile({
@@ -12,9 +12,8 @@ export default function Profile({
 }) {
   const [error, setError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [debugStatus, setDebugStatus] = useState("");
-  const [debugHint, setDebugHint] = useState("");
   const [showFullResumeText, setShowFullResumeText] = useState(false);
+  const profilePreviewRef = useRef(null);
   const previewLimit = 800;
   const resumeText = resumeData?.resumeText || "";
   const hasLongResumeText = resumeText.length > previewLimit;
@@ -22,11 +21,23 @@ export default function Profile({
     ? resumeText
     : `${resumeText.slice(0, previewLimit)}...`;
 
+  useEffect(() => {
+    if (!profile || !profilePreviewRef.current) {
+      return;
+    }
+
+    profilePreviewRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+    profilePreviewRef.current.focus({
+      preventScroll: true
+    });
+  }, [profile]);
+
   const generateProfile = async () => {
     if (!resumeData?.resumeText) {
       setError("We do not have enough resume text yet. Go back and add your experience manually before generating your profile.");
-      setDebugStatus("Generation blocked");
-      setDebugHint("No resume text is available. Return to the previous step and complete the manual CV details first.");
       console.error("Profile generation blocked", {
         reason: "Missing resume text",
         resumeData
@@ -36,8 +47,6 @@ export default function Profile({
 
     setError("");
     setIsGenerating(true);
-    setDebugStatus("Sending request");
-    setDebugHint("Calling POST /ai/generate-profile with your parsed resume text and onboarding context.");
 
     console.info("Starting profile generation", {
       resumeLength: resumeData.resumeText.length,
@@ -55,8 +64,6 @@ export default function Profile({
       });
 
       onProfileGenerated(data.profile);
-      setDebugStatus("Profile generated");
-      setDebugHint("The backend returned profile JSON and the UI has stored it successfully.");
       console.info("Profile generation succeeded", {
         hasSummary: Boolean(data.profile?.summary),
         skillsCount: data.profile?.skills?.length || 0
@@ -66,8 +73,6 @@ export default function Profile({
         error: generationError
       });
       setError(generationError.message);
-      setDebugStatus("Generation failed");
-      setDebugHint("Check auth token/session, backend URL, and /ai/generate-profile response in DevTools Network.");
     } finally {
       setIsGenerating(false);
     }
@@ -98,15 +103,9 @@ export default function Profile({
             <strong>{resumeData?.parsedFromFile ? "Resume text extracted from file" : "Resume text ready for AI generation"}</strong>
           </div>
         ) : null}
-
-        <div className="profile-meta-card">
-          <span className="profile-meta-label">Debug</span>
-          <strong>{debugStatus || "Waiting for Generate Profile click"}</strong>
-        </div>
       </div>
 
       {error ? <p className="auth-error">{error}</p> : null}
-      {debugHint ? <p className="upload-hint">{debugHint}</p> : null}
 
       {resumeText ? (
         <div className="profile-preview-card">
@@ -134,7 +133,7 @@ export default function Profile({
       </div>
 
       {profile ? (
-        <div className="profile-preview">
+        <div className="profile-preview" ref={profilePreviewRef} tabIndex="-1">
           {profile.headline ? (
             <div className="profile-preview-card">
               <span className="profile-meta-label">Headline</span>
