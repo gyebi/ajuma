@@ -198,6 +198,7 @@ export default function App() {
               favoriteJobs={favoriteJobs}
               profile={profile}
               resumeData={resumeData}
+              onboardingData={onboardingData}
               onBack={() => setAppStep("profile")}
               onGoToFavorites={() => setAppStep("favorites")}
               onToggleFavorite={toggleFavoriteJob}

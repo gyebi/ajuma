@@ -33,43 +33,43 @@ export const solutionCards = [
 
 export const pricingPlans = [
   {
-    name: "Free",
-    price: "$0",
+    name: "Starter",
+    price: "GHS 1",
     cadence: "/month",
-    description: "A practical starting point for job seekers who want to shape a profile and explore the Ajuma experience.",
+    description: "A simple way to set up your profile, upload your CV, and submit your first applications.",
     features: [
-      "Core profile-building tools",
-      "Basic job matching support",
-      "Guided workflow access",
-      "Email product updates"
+      "Up to 3 applications each month",
+      "Basic profile creation",
+      "CV upload and parsing",
+      "Basic job matching"
     ]
   },
   {
     name: "Pro",
-    price: "$15",
+    price: "GHS 10",
     cadence: "/month",
-    description: "For active job seekers who want deeper AI support, stronger matching, and a faster overall workflow.",
+    description: "For active job seekers who want stronger application quality, better matching, and a smoother workflow.",
     featured: true,
     features: [
-      "Expanded AI profile generation",
-      "Enhanced job matching",
-      "Profile refinement workflows",
-      "Priority support",
-      "Limited alerts included"
+      "Up to 20 applications each month",
+      "AI-optimized CV and profile",
+      "Stronger job matching",
+      "Saved jobs and tracking",
+      "Priority application workflow"
     ]
   },
   {
-    name: "Automation",
-    price: "$39",
+    name: "Advanced",
+    price: "GHS 20",
     cadence: "/month",
-    description: "For users who want higher limits, faster actions, and more automation across the search process.",
+    description: "For high-volume job seekers who want more capacity, stronger priority, and a faster way to stay consistent.",
     theme: "dark",
     features: [
-      "Higher AI usage limits",
-      "Automation-first workflows",
-      "Faster opportunity handling",
-      "Expanded notifications",
-      "Best for power users"
+      "Up to 50 applications each month",
+      "Priority matching",
+      "Advanced CV and profile refinement",
+      "Faster application workflow",
+      "Best for high-volume searches"
     ]
   }
 ];

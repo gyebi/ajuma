@@ -884,6 +884,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  height: 100%;
   padding: 26px;
   border: 1px solid var(--border-soft);
   border-radius: 28px;
@@ -902,11 +903,11 @@ h1 {
 }
 
 .pricing-card-dark {
-  border-color: rgba(78, 82, 90, 0.82);
+  border-color: rgba(177, 118, 44, 0.38);
   background:
-    radial-gradient(circle at top right, rgba(68, 147, 255, 0.18), transparent 30%),
-    linear-gradient(180deg, #0b1320 0%, #152235 100%);
-  box-shadow: 0 22px 48px rgba(8, 15, 26, 0.2);
+    radial-gradient(circle at top right, rgba(255, 235, 204, 0.3), transparent 36%),
+    linear-gradient(180deg, #c97a1c 0%, #e2a03b 100%);
+  box-shadow: 0 22px 48px rgba(167, 104, 27, 0.18);
 }
 
 .pricing-card-top {
@@ -947,6 +948,7 @@ h1 {
 .pricing-list {
   display: grid;
   gap: 12px;
+  flex: 1;
   margin: 0;
   padding-left: 20px;
   color: rgba(17, 17, 17, 0.84);
@@ -1092,18 +1094,18 @@ h1 {
 .pricing-card-dark .pricing-description,
 .pricing-card-dark .pricing-list,
 .pricing-card-dark .pricing-list li::marker {
-  color: rgba(243, 247, 255, 0.72);
+  color: rgba(17, 17, 17, 0.72);
 }
 
 .pricing-card-dark .pricing-amount strong,
 .pricing-card-dark .pricing-card-top,
 .pricing-card-dark .pricing-list {
-  color: #f7fbff;
+  color: #111111;
 }
 
 .pricing-card-dark .button-secondary {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f7fbff;
+  background: rgba(255, 255, 255, 0.28);
+  color: #111111;
 }
 
 .floating-note {

@@ -8,7 +8,8 @@ export default function Jobs({
   onGoToFavorites,
   onToggleFavorite,
   profile,
-  resumeData
+  resumeData,
+  onboardingData
 }) {
   const [jobs, setJobs] = useState([]);
   const [error, setError] = useState("");
@@ -26,7 +27,8 @@ export default function Jobs({
         method: "POST",
         body: JSON.stringify({
           profile,
-          resumeText: resumeData?.resumeText || ""
+          resumeText: resumeData?.resumeText || "",
+          onboarding: onboardingData || {}
         })
       });
 

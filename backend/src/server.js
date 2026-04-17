@@ -145,7 +145,8 @@ app.post("/jobs/sync", authLimiter, verifyFirebaseToken, async (req, res) => {
   try {
     const { jobs, matchingMethod, source, syncedAt } = await syncJobsForUser(req.user.uid, {
       profile: req.body?.profile,
-      resumeText: req.body?.resumeText
+      resumeText: req.body?.resumeText,
+      onboarding: req.body?.onboarding
     });
 
     return res.json({

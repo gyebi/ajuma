@@ -69,8 +69,102 @@ function normalizeJob(rawJob = {}) {
   };
 }
 
+function normalizePreferenceValue(value = "") {
+  return String(value).trim().toLowerCase();
+}
+
+function normalizeOnboarding(onboarding = {}) {
+  const source = onboarding && typeof onboarding === "object" ? onboarding : {};
+
+  return {
+    location: String(source.location || "").trim(),
+    targetRole: String(source.targetRole || "").trim(),
+    workPreference: normalizePreferenceValue(source.workPreference),
+    experienceLevel: String(source.experienceLevel || "").trim(),
+    educationLevel: String(source.educationLevel || "").trim()
+  };
+}
+
+function normalizeTextForMatch(value = "") {
+  return String(value).trim().toLowerCase();
+}
+
+function textOverlaps(textA = "", textB = "") {
+  const a = normalizeTextForMatch(textA);
+  const b = normalizeTextForMatch(textB);
+
+  if (!a || !b) {
+    return false;
+  }
+
+  return a.includes(b) || b.includes(a);
+}
+
+function jobSupportsPreference(job = {}, workPreference = "") {
+  const preference = normalizePreferenceValue(workPreference);
+  const locationText = normalizeTextForMatch(job.location);
+  const titleText = normalizeTextForMatch(job.title);
+  const descriptionText = normalizeTextForMatch(job.description);
+  const combinedText = `${titleText} ${locationText} ${descriptionText}`;
+  const isRemote = Boolean(job.remote) || combinedText.includes("remote");
+  const mentionsHybrid = combinedText.includes("hybrid");
+  const mentionsOnsite = combinedText.includes("on site") || combinedText.includes("onsite") || combinedText.includes("in-office");
+
+  if (!preference) {
+    return true;
+  }
+
+  if (preference === "remote") {
+    return isRemote;
+  }
+
+  if (preference === "hybrid") {
+    return mentionsHybrid || isRemote;
+  }
+
+  if (preference === "onsite") {
+    return !isRemote || mentionsOnsite;
+  }
+
+  return true;
+}
+
+function scorePreferenceSignals(job = {}, candidate = {}) {
+  const reasons = [];
+  let bonus = 0;
+
+  const targetRole = normalizeTextForMatch(candidate.targetRole);
+  const location = normalizeTextForMatch(candidate.location);
+  const workPreference = normalizePreferenceValue(candidate.workPreference);
+  const jobTitle = normalizeTextForMatch(job.title);
+  const jobLocation = normalizeTextForMatch(job.location);
+
+  if (targetRole && jobTitle.includes(targetRole)) {
+    bonus += 12;
+    reasons.push("Role title closely matches your target role");
+  }
+
+  if (textOverlaps(location, jobLocation)) {
+    bonus += 8;
+    reasons.push("Location aligns with your preferred area");
+  }
+
+  if (workPreference && jobSupportsPreference(job, workPreference)) {
+    bonus += 10;
+    reasons.push("Matches your work preference");
+  } else if (workPreference) {
+    bonus -= 18;
+  }
+
+  return {
+    bonus,
+    reasons
+  };
+}
+
 function buildCandidateContext(matchInput = {}) {
   const profile = matchInput.profile || {};
+  const onboarding = normalizeOnboarding(matchInput.onboarding);
   const skills = Array.isArray(profile.skills) ? profile.skills : [];
   const experience = Array.isArray(profile.experience) ? profile.experience : [];
   const education = Array.isArray(profile.education) ? profile.education : [];
@@ -83,12 +177,20 @@ function buildCandidateContext(matchInput = {}) {
     experience,
     education,
     resumeText,
+    location: onboarding.location,
+    targetRole: onboarding.targetRole,
+    workPreference: onboarding.workPreference,
+    experienceLevel: onboarding.experienceLevel,
+    educationLevel: onboarding.educationLevel,
     contextText: [
       summary,
       skills.join(" "),
       experience.join(" "),
       education.join(" "),
-      resumeText
+      resumeText,
+      onboarding.targetRole,
+      onboarding.location,
+      onboarding.workPreference
     ].join(" ")
   };
 }
@@ -112,15 +214,17 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
     const tagOverlap = countOverlap(candidateTokens, jobTagTokens);
     const descriptionOverlap = countOverlap(candidateTokens, jobDescriptionTokens);
     const skillOverlap = countOverlap(skillTokens, jobCombinedTokens);
+    const preferenceSignals = scorePreferenceSignals(job, candidate);
 
     const weightedScore = (
       (titleOverlap * 3) +
       (tagOverlap * 2) +
       (descriptionOverlap * 1) +
-      (skillOverlap * 2)
+      (skillOverlap * 2) +
+      preferenceSignals.bonus
     );
 
-    const normalizedScore = Math.min(99, Math.round(weightedScore * 3.5));
+    const normalizedScore = Math.max(0, Math.min(99, Math.round(weightedScore * 3.5)));
     const reasons = [];
 
     if (titleOverlap > 0) {
@@ -132,6 +236,11 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
     if (skillOverlap > 0) {
       reasons.push("Role mentions skills present in your profile");
     }
+    preferenceSignals.reasons.forEach((reason) => {
+      if (reasons.length < 3 && !reasons.includes(reason)) {
+        reasons.push(reason);
+      }
+    });
     if (!reasons.length) {
       reasons.push("General relevance from overall profile context");
     }
@@ -139,7 +248,7 @@ function scoreJobsHeuristically(jobs = [], matchInput = {}) {
     return {
       ...job,
       matchScore: normalizedScore,
-      matchReasons: reasons.slice(0, 2),
+      matchReasons: reasons.slice(0, 3),
       matchingMethod: "heuristic"
     };
   });
@@ -194,13 +303,16 @@ async function rerankJobsWithOpenAI(seedRankedJobs = [], matchInput = {}) {
       {
         role: "user",
         content: JSON.stringify({
-          instruction: "Rank jobs for this candidate using CV fit. Provide score 0-100 and 1-2 concise reasons per job. Return only JSON: {\"rankings\":[{\"id\":\"...\",\"matchScore\":number,\"matchReasons\":[\"...\"]}]}",
+          instruction: "Rank jobs for this candidate using CV fit, target role, work preference, and location preference. Provide score 0-100 and 1-2 concise reasons per job. Return only JSON: {\"rankings\":[{\"id\":\"...\",\"matchScore\":number,\"matchReasons\":[\"...\"]}]}",
           candidate: {
             summary: candidate.summary,
             skills: candidate.skills,
             experience: candidate.experience,
             education: candidate.education,
-            resumeTextSnippet: candidate.resumeText.slice(0, 1200)
+            resumeTextSnippet: candidate.resumeText.slice(0, 1200),
+            targetRole: candidate.targetRole,
+            location: candidate.location,
+            workPreference: candidate.workPreference
           },
           jobs: rankingCandidates
         })
