@@ -3,6 +3,7 @@ import OpenAI from "openai";
 const ARBEITNOW_API_URL = "https://www.arbeitnow.com/api/job-board-api";
 const MAX_SYNC_PAGES = Number(process.env.JOBS_SYNC_PAGES || 2);
 const MAX_RETURNED_JOBS = Number(process.env.JOBS_RESULT_LIMIT || 50);
+const MIN_MATCH_SCORE = Number(process.env.JOBS_MIN_MATCH_SCORE || 90);
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const AI_RERANK_POOL_SIZE = Number(process.env.JOBS_AI_RERANK_POOL_SIZE || 25);
 const AI_ENABLED = Boolean(process.env.OPENAI_API_KEY);
@@ -406,7 +407,9 @@ export async function syncJobsForUser(userId, matchInput = {}) {
   const heuristicRanked = scoreJobsHeuristically(normalizedJobs, matchInput)
     .sort((a, b) => b.matchScore - a.matchScore);
   const aiRanked = await rerankJobsWithOpenAI(heuristicRanked, matchInput);
-  const jobs = aiRanked.slice(0, MAX_RETURNED_JOBS);
+  const jobs = aiRanked
+    .filter((job) => typeof job.matchScore === "number" && job.matchScore >= MIN_MATCH_SCORE)
+    .slice(0, MAX_RETURNED_JOBS);
   const syncedAt = new Date().toISOString();
   const source = "arbeitnow";
   const matchingMethod = jobs.some((job) => job.matchingMethod === "openai")
