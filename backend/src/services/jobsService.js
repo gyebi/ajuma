@@ -71,14 +71,39 @@ function normalizeJob(rawJob = {}) {
   };
 }
 
-function getJobAgeInDays(postedAt) {
+function parsePostedTime(postedAt) {
   if (!postedAt) {
     return null;
   }
 
-  const postedTime = new Date(postedAt).getTime();
+  if (typeof postedAt === "number" && Number.isFinite(postedAt)) {
+    return postedAt < 1e12 ? postedAt * 1000 : postedAt;
+  }
 
-  if (Number.isNaN(postedTime)) {
+  if (typeof postedAt === "string") {
+    const trimmed = postedAt.trim();
+
+    if (!trimmed) {
+      return null;
+    }
+
+    if (/^\d+$/.test(trimmed)) {
+      const numeric = Number(trimmed);
+      return numeric < 1e12 ? numeric * 1000 : numeric;
+    }
+
+    const parsed = new Date(trimmed).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  const parsed = new Date(postedAt).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getJobAgeInDays(postedAt) {
+  const postedTime = parsePostedTime(postedAt);
+
+  if (postedTime === null) {
     return null;
   }
 
@@ -88,7 +113,13 @@ function getJobAgeInDays(postedAt) {
     return 0;
   }
 
-  return Math.floor(ageMs / (1000 * 60 * 60 * 24));
+  const ageInDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+
+  if (ageInDays > 365) {
+    return null;
+  }
+
+  return ageInDays;
 }
 
 function getFreshnessSignals(postedAt) {
