@@ -1,10 +1,14 @@
 node_modules
 dist
 .codex
+.firebase
 .env
 .env.local
+.env.production
 backend/.env
+backend/cloudrun.env.yaml
 frontend/.env
+frontend/.env.production
 coverage
 *.log
 config/serviceAccountKey.json

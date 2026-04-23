@@ -18,10 +18,44 @@ import { extractResumeText } from "./services/resumeParser.js";
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 const port = Number(process.env.PORT || 3001);
-const allowedOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+const configuredFrontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+
+function buildAllowedOrigins() {
+  const configured = configuredFrontendOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const origins = new Set([
+    "http://localhost:5173",
+    ...configured
+  ]);
+
+  for (const origin of [...origins]) {
+    const match = origin.match(/^https:\/\/([a-z0-9-]+)\.web\.app$/i);
+
+    if (match) {
+      origins.add(`https://${match[1]}.firebaseapp.com`);
+    }
+  }
+
+  return origins;
+}
+
+const allowedOrigins = buildAllowedOrigins();
 
 app.use(cors({
-  origin: allowedOrigin
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    console.error("CORS blocked request", {
+      origin,
+      allowedOrigins: [...allowedOrigins]
+    });
+
+    return callback(new Error("Not allowed by CORS"));
+  }
 }));
 app.use(express.json({ limit: "2mb" }));
 app.use(generalLimiter);
