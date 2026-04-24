@@ -2,6 +2,8 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import billingRoutes from "../modules/billing/billing.routes.js";
+import paymentsRoutes from "../modules/payments/payments.routes.js";
 import { verifyFirebaseToken } from "./middleware/auth.js";
 import {
   aiLimiter,
@@ -19,6 +21,12 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 const port = Number(process.env.PORT || 3001);
 const configuredFrontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+
+function captureRawBody(req, _res, buffer) {
+  if (buffer?.length) {
+    req.rawBody = buffer.toString("utf8");
+  }
+}
 
 function buildAllowedOrigins() {
   const configured = configuredFrontendOrigin
@@ -57,7 +65,7 @@ app.use(cors({
     return callback(new Error("Not allowed by CORS"));
   }
 }));
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "2mb", verify: captureRawBody }));
 app.use(generalLimiter);
 app.use((req, res, next) => {
   const startedAt = Date.now();
@@ -76,6 +84,9 @@ app.get("/health", (_req, res) => {
     service: "ajuma-ai-backend"
   });
 });
+
+app.use("/billing", billingRoutes);
+app.use("/payments", paymentsRoutes);
 
 app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resume"), async (req, res) => {
   if (!req.file) {

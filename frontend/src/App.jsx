@@ -5,11 +5,13 @@ import Jobs from "./pages/Jobs";
 import FavoriteJobs from "./pages/FavoriteJobs";
 import LandingPage from "./pages/LandingPage";
 import Onboarding from "./pages/Onboarding";
+import PaymentCallback from "./pages/PaymentCallback";
 import Profile from "./pages/Profile";
 import StarterCv from "./pages/StarterCv";
 import UploadResume from "./pages/UploadResume";
 
 export default function App() {
+  const isPaymentCallback = window.location.pathname === "/payment/callback";
   const [showAuth, setShowAuth] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [appStep, setAppStep] = useState("onboarding");
@@ -35,12 +37,16 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (isPaymentCallback) {
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
     });
 
     return unsubscribe;
-  }, []);
+  }, [isPaymentCallback]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -119,6 +125,10 @@ export default function App() {
       })
     );
   }, [appStep, currentUser, favoriteJobs, onboardingData, profile, resumeData]);
+
+  if (isPaymentCallback) {
+    return <PaymentCallback />;
+  }
 
   if (currentUser) {
     return (
