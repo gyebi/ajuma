@@ -272,6 +272,12 @@ export async function verifyPayment(req, res) {
       });
     }
 
+    if (existingPayment.userId !== req.user.uid) {
+      return res.status(403).json({
+        error: "You are not allowed to verify this payment reference.",
+      });
+    }
+
     const paystackResponse = await verifyTransaction(reference);
     const paymentStatus = paystackResponse?.data?.status || "unknown";
 

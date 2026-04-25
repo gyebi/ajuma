@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import { fetchMyEntitlement, verifyPayment } from "../services/paymentApi";
+
+function waitForAuthState() {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
 
 export default function PaymentCallback() {
   const [status, setStatus] = useState("loading");
@@ -11,8 +22,20 @@ export default function PaymentCallback() {
     let isMounted = true;
 
     async function handleCallback() {
+      console.log("Payment callback page loaded", {
+        href: window.location.href,
+        search: window.location.search,
+        pathname: window.location.pathname
+      });
+
       const searchParams = new URLSearchParams(window.location.search);
       const reference = searchParams.get("reference") || searchParams.get("trxref");
+
+      console.log("Payment callback reference extracted", {
+        reference,
+        trxref: searchParams.get("trxref"),
+        rawReference: searchParams.get("reference")
+      });
 
       if (!reference) {
         if (!isMounted) {
@@ -25,7 +48,30 @@ export default function PaymentCallback() {
       }
 
       try {
+        console.log("Waiting for auth before payment verification");
+        const user = await waitForAuthState();
+
+        console.log("Payment callback auth resolved", {
+          uid: user?.uid || null,
+          email: user?.email || null
+        });
+
+        if (!user) {
+          if (!isMounted) {
+            return;
+          }
+
+          setStatus("error");
+          setMessage("Please sign in again to complete payment verification.");
+          return;
+        }
+
+        console.log("Starting payment verification from callback", {
+          reference
+        });
         const verification = await verifyPayment(reference);
+
+        console.log("Payment verification response", verification);
 
         if (!isMounted) {
           return;
@@ -46,6 +92,8 @@ export default function PaymentCallback() {
           // Keep the verification result even if the follow-up entitlement fetch fails.
         }
       } catch (error) {
+        console.error("Payment callback verification failed", error);
+
         if (!isMounted) {
           return;
         }
