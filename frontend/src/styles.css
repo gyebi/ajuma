@@ -152,6 +152,29 @@ button {
   margin-top: 14px;
 }
 
+.cv-choice-feedback {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 248, 239, 0.82);
+}
+
+.cv-choice-feedback strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.98rem;
+}
+
+.cv-choice-feedback p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.cv-choice-feedback-starter {
+  background: rgba(255, 242, 204, 0.88);
+}
+
 .choice-card {
   display: grid;
   gap: 8px;

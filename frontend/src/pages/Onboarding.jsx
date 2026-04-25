@@ -8,7 +8,7 @@ const defaultForm = {
   workPreference: "remote",
   educationLevel: "",
   skills: "",
-  hasCv: "yes"
+  hasCv: ""
 };
 
 const targetRoles = [
@@ -38,6 +38,10 @@ export default function Onboarding({ initialData, onContinue }) {
   }
 
   function submit() {
+    if (!form.hasCv) {
+      return;
+    }
+
     onContinue({
       ...form,
       skillsList: form.skills
@@ -153,10 +157,39 @@ export default function Onboarding({ initialData, onContinue }) {
             <span>Use Ajuma AI to generate a starter CV.</span>
           </button>
         </div>
+
+        {form.hasCv === "yes" ? (
+          <div className="cv-choice-feedback">
+            <strong>Next step: upload your current CV.</strong>
+            <p>
+              We will take you to the upload screen so Ajuma can read what you
+              already have and build from it.
+            </p>
+          </div>
+        ) : null}
+
+        {form.hasCv === "no" ? (
+          <div className="cv-choice-feedback cv-choice-feedback-starter">
+            <strong>Starter CV selected.</strong>
+            <p>
+              A few extra fields will open on the next step so we can help you
+              build a CV from scratch.
+            </p>
+          </div>
+        ) : null}
       </div>
 
-      <button className="button button-primary app-cta" type="button" onClick={submit}>
-        {form.hasCv === "yes" ? "Continue with My CV" : "Generate My Starter CV"}
+      <button
+        className="button button-primary app-cta"
+        type="button"
+        onClick={submit}
+        disabled={!form.hasCv}
+      >
+        {form.hasCv === "yes"
+          ? "Continue with My CV"
+          : form.hasCv === "no"
+            ? "Generate My Starter CV"
+            : "Choose Your CV Path"}
       </button>
     </section>
   );
