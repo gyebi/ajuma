@@ -100,6 +100,51 @@ export async function apiFetch(path, options = {}) {
   return data;
 }
 
+export async function publicApiFetch(path, options = {}) {
+  const url = getBackendUrl(path);
+  let res;
+
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+  } catch (error) {
+    console.error("Public API network failure", {
+      path,
+      url,
+      method: options.method || "GET",
+      error
+    });
+    throw new Error(`Network error while calling ${path}`);
+  }
+
+  const data = await parseApiResponse(res, path, url, options.method || "GET", "Public");
+
+  if (!res.ok) {
+    console.error("Public API request failed", {
+      path,
+      url,
+      method: options.method || "GET",
+      status: res.status,
+      response: data
+    });
+    throw new Error(data.error || `Request failed for ${path}`);
+  }
+
+  console.info("Public API request succeeded", {
+    path,
+    url,
+    method: options.method || "GET",
+    status: res.status
+  });
+
+  return data;
+}
+
 export async function apiFetchForm(path, formData, options = {}) {
   const token = await getToken();
   const url = getBackendUrl(path);

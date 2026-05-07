@@ -815,16 +815,35 @@ h1 {
 }
 
 .workflow-card-accent {
-  background: linear-gradient(135deg, rgba(255, 205, 150, 0.58), rgba(122, 212, 195, 0.4));
+  background: rgba(247, 244, 238, 0.96);
 }
 
 .workflow-label {
-  margin-bottom: 10px;
-  color: rgba(17, 17, 17, 0.56);
-  font-size: 0.8rem;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.12em;
+  line-height: 1;
   text-transform: uppercase;
+}
+
+.workflow-card:nth-child(1) .workflow-label {
+  background: #ff2d2d;
+}
+
+.workflow-card:nth-child(2) .workflow-label {
+  background: #ffdf22;
+  color: #2f2100;
+}
+
+.workflow-card:nth-child(3) .workflow-label {
+  background: #14c85f;
 }
 
 .workflow-card h3,
@@ -942,6 +961,10 @@ h1 {
   line-height: 1.72;
 }
 
+.pricing-status-note {
+  margin-bottom: 18px;
+}
+
 .pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -976,6 +999,33 @@ h1 {
     radial-gradient(circle at top right, rgba(255, 235, 204, 0.3), transparent 36%),
     linear-gradient(180deg, #c97a1c 0%, #e2a03b 100%);
   box-shadow: 0 22px 48px rgba(167, 104, 27, 0.18);
+}
+
+.pricing-button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.pricing-button-starter {
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.pricing-button-standard {
+  background: #247b63;
+  color: #ffffff;
+}
+
+.pricing-button-pro {
+  background: #1f2e41;
+  color: #ffffff;
+}
+
+.pricing-button-starter:hover,
+.pricing-button-standard:hover,
+.pricing-button-pro:hover {
+  opacity: 0.94;
 }
 
 .pricing-card-top {
@@ -1104,6 +1154,39 @@ h1 {
   width: min(100%, 980px);
   max-height: min(88vh, 860px);
   overflow-y: auto;
+}
+
+.checkout-modal {
+  width: min(100%, 560px);
+}
+
+.checkout-summary {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 4px;
+  padding: 20px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.checkout-summary span {
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkout-summary strong {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.checkout-summary p {
+  margin-bottom: 0;
+  color: rgba(17, 17, 17, 0.72);
 }
 
 .pricing-grid-modal {

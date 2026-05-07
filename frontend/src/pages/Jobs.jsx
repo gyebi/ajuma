@@ -9,6 +9,12 @@ import {
   fetchPlans,
   initializePayment
 } from "../services/paymentApi";
+import {
+  buildPlanFeatures,
+  formatPlanPrice,
+  getPlanCreditsLabel,
+  normalizePlanKey
+} from "../utils/plans";
 
 function formatPostedAge(job) {
   if (typeof job.ageInDays !== "number") {
@@ -24,10 +30,6 @@ function formatPostedAge(job) {
   }
 
   return `Posted ${job.ageInDays} days ago`;
-}
-
-function normalizePlanKey(value = "") {
-  return String(value).trim().toLowerCase();
 }
 
 const homepagePlanLookup = new Map(
@@ -375,15 +377,10 @@ export default function Jobs({
                   || homepagePlanLookup.get(normalizePlanKey(plan.code))
                   || homepagePlanLookup.get(normalizePlanKey(plan.id))
                 );
-                const amount = plan.amount ?? plan.price ?? plan.priceAmount ?? plan.priceValue ?? "";
-                const credits = plan.credits ?? plan.creditAmount ?? plan.creditCount ?? 0;
-                const displayPrice = marketingPlan?.price || `${amount}`;
+                const displayPrice = formatPlanPrice(plan);
                 const displayCadence = marketingPlan?.cadence || "";
-                const displayDescription = marketingPlan?.description || plan.description || `${credits} application credits`;
-                const displayFeatures = marketingPlan?.features || [
-                  `${credits} application credits`,
-                  plan.active === false ? "Currently unavailable" : "Instant unlock after payment"
-                ];
+                const displayDescription = plan.description || marketingPlan?.description || getPlanCreditsLabel(plan);
+                const displayFeatures = buildPlanFeatures(plan, marketingPlan?.features || []);
 
                 return (
                   <button
@@ -396,7 +393,7 @@ export default function Jobs({
                       <p className="pricing-name">{plan.name || plan.code || "Plan"}</p>
                       <div className="pricing-amount">
                         <strong>{displayPrice}</strong>
-                        <span>{displayCadence || plan.currency || "GHS"}</span>
+                        <span>{displayCadence}</span>
                       </div>
                       <p className="pricing-description">
                         {displayDescription}

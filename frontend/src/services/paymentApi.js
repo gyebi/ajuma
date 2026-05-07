@@ -1,7 +1,13 @@
-import { apiFetch } from "./api";
+import { apiFetch, publicApiFetch } from "./api";
 
 export async function fetchPlans() {
   return apiFetch("/billing/plans", {
+    method: "GET"
+  });
+}
+
+export async function fetchPublicPlans() {
+  return publicApiFetch("/billing/plans", {
     method: "GET"
   });
 }

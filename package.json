@@ -10,6 +10,10 @@
     "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
     "dev:frontend": "npm run dev --workspace frontend",
     "dev:backend": "npm run dev --workspace backend",
+    "tunnel:frontend": "ngrok start frontend",
+    "tunnel:backend": "ngrok start backend",
+    "tunnel": "ngrok start --all",
+    "dev:tunnel": "concurrently \"npm run dev\" \"npm run tunnel\"",
     "build": "npm run build --workspace frontend && npm run build --workspace backend",
     "start": "npm run start --workspace backend",
     "lint": "npm run lint --workspace frontend && npm run lint --workspace backend"

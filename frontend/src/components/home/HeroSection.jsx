@@ -9,14 +9,10 @@ export default function HeroSection({ onSignIn }) {
           A clearer starting point for a smarter job search.
         </p>
 
-        <h1>Turn your experience into a stronger profile and a more focused job search.</h1>
-
+        <h1>Build an AI-powered career profile and focus your job search on the right opportunities.</h1>
         <p className="hero-text">
-          Ajuma AI helps young graduates and first-time job seekers turn their education and experiences into clear, confident profiles—and discover opportunities that actually fit them from day one.
+          Ajuma leverages AI to help young graduates, first-time job seekers, and skilled professionals transform their education, skills, and experience into clear, confident profiles for a more focused job search.
         </p>
-
-         <p className="hero-text">
-          Ajuma AI helps skilled professionals level up their careers, reposition their experience, and transition into better, more rewarding opportunities. </p>
 
         <div className="hero-actions hero-actions-lower">
           <button className="button button-primary" type="button" onClick={onSignIn}>

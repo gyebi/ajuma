@@ -6,7 +6,7 @@ import SolutionsSection from "../components/home/SolutionsSection";
 import Navbar from "../components/Navbar";
 import Login from "./Login";
 
-export default function LandingPage({ currentUser, showAuth, onCloseAuth, onSignIn }) {
+export default function LandingPage({ currentUser, showAuth, onChoosePlan, onCloseAuth, onSignIn }) {
   return (
     <div className="site-shell">
       <Navbar currentUser={currentUser} onSignIn={onSignIn} />
@@ -15,7 +15,7 @@ export default function LandingPage({ currentUser, showAuth, onCloseAuth, onSign
         <HeroSection onSignIn={onSignIn} />
         <HowItWorksSection />
         <SolutionsSection />
-        <PricingSection />
+        <PricingSection onChoosePlan={onChoosePlan} />
         <CTASection onSignIn={onSignIn} />
       </main>
 

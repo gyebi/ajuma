@@ -16,6 +16,7 @@ import {
   ProfileGenerationError
 } from "./services/profileService.js";
 import { extractResumeText } from "./services/resumeParser.js";
+import { getUserFlow, saveUserFlow } from "./services/userFlowService.js";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -87,6 +88,44 @@ app.get("/health", (_req, res) => {
 
 app.use("/billing", billingRoutes);
 app.use("/payments", paymentsRoutes);
+
+app.get("/me/flow", authLimiter, verifyFirebaseToken, async (req, res) => {
+  try {
+    const flow = await getUserFlow(req.user.uid);
+
+    return res.json({ flow });
+  } catch (error) {
+    console.error("User flow fetch failed", {
+      userId: req.user.uid,
+      error
+    });
+
+    return res.status(500).json({
+      error: "Unable to load saved setup right now."
+    });
+  }
+});
+
+app.put("/me/flow", authLimiter, verifyFirebaseToken, async (req, res) => {
+  try {
+    const flow = req.body?.flow || {};
+    const savedFlow = await saveUserFlow(req.user.uid, flow);
+
+    return res.json({
+      message: "Setup saved successfully.",
+      flow: savedFlow
+    });
+  } catch (error) {
+    console.error("User flow save failed", {
+      userId: req.user.uid,
+      error
+    });
+
+    return res.status(500).json({
+      error: "Unable to save setup right now."
+    });
+  }
+});
 
 app.post("/resume/upload", authLimiter, verifyFirebaseToken, upload.single("resume"), async (req, res) => {
   if (!req.file) {

@@ -9,6 +9,60 @@ import PaymentCallback from "./pages/PaymentCallback";
 import Profile from "./pages/Profile";
 import StarterCv from "./pages/StarterCv";
 import UploadResume from "./pages/UploadResume";
+import { fetchSavedFlow, saveFlow } from "./services/flowApi";
+import {
+  fetchPublicPlans,
+  initializePayment
+} from "./services/paymentApi";
+import {
+  formatPlanPrice,
+  getPlanCreditsLabel,
+  normalizePlanKey
+} from "./utils/plans";
+
+function findPlanById(plans, planId) {
+  const normalizedPlanId = normalizePlanKey(planId);
+
+  return plans.find((plan) => (
+    normalizePlanKey(plan.id) === normalizedPlanId
+    || normalizePlanKey(plan.code) === normalizedPlanId
+    || normalizePlanKey(plan.name) === normalizedPlanId
+  )) || null;
+}
+
+function getStoredFlow(userId) {
+  const saved = window.localStorage.getItem(`ajuma-flow:${userId}`);
+
+  if (!saved) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(saved);
+  } catch (_error) {
+    window.localStorage.removeItem(`ajuma-flow:${userId}`);
+    return null;
+  }
+}
+
+function inferStepFromFlow(flow = {}) {
+  const restoredOnboarding = flow.onboardingData || null;
+  const restoredResume = flow.resumeData || null;
+  const restoredProfile = flow.profile || null;
+  const hasUsableResumeText = Boolean(restoredResume?.resumeText);
+
+  return restoredProfile
+    ? "jobs"
+    : hasUsableResumeText
+      ? "profile"
+      : restoredResume?.extractionFailed
+        ? "starterCv"
+        : restoredOnboarding?.hasCv === "yes"
+          ? "upload"
+          : restoredOnboarding
+            ? "starterCv"
+            : "onboarding";
+}
 
 export default function App() {
   const isPaymentCallback = window.location.pathname === "/payment/callback";
@@ -19,11 +73,43 @@ export default function App() {
   const [resumeData, setResumeData] = useState(null);
   const [profile, setProfile] = useState(null);
   const [favoriteJobs, setFavoriteJobs] = useState([]);
+  const [pendingCheckoutPlanId, setPendingCheckoutPlanId] = useState("");
+  const [checkoutPlans, setCheckoutPlans] = useState([]);
+  const [checkoutError, setCheckoutError] = useState("");
+  const [hasRestoredFlow, setHasRestoredFlow] = useState(false);
+  const [isLoadingCheckoutPlan, setIsLoadingCheckoutPlan] = useState(false);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const pendingCheckoutPlan = pendingCheckoutPlanId
+    ? findPlanById(checkoutPlans, pendingCheckoutPlanId)
+    : null;
 
   function resetToOnboarding() {
     setResumeData(null);
     setProfile(null);
     setAppStep("onboarding");
+  }
+
+  function applySavedFlow(flow) {
+    const restoredOnboarding = flow?.onboardingData || null;
+    const restoredResume = flow?.resumeData || null;
+    const restoredProfile = flow?.profile || null;
+    const restoredFavoriteJobs = Array.isArray(flow?.favoriteJobs)
+      ? flow.favoriteJobs
+      : [];
+
+    const savedStep = flow?.appStep;
+    const inferredStep = inferStepFromFlow(flow);
+    const shouldUseInferredStep = !savedStep || (
+      savedStep === "onboarding" &&
+      restoredOnboarding?.hasCv === "yes" &&
+      !restoredResume
+    );
+
+    setAppStep(shouldUseInferredStep ? inferredStep : savedStep);
+    setOnboardingData(restoredOnboarding);
+    setResumeData(restoredResume);
+    setProfile(restoredProfile);
+    setFavoriteJobs(restoredFavoriteJobs);
   }
 
   function toggleFavoriteJob(job) {
@@ -34,6 +120,37 @@ export default function App() {
         ? current.filter((favoriteJob) => favoriteJob.id !== job.id)
         : [{ ...job, favoritedAt: new Date().toISOString() }, ...current];
     });
+  }
+
+  function handleChoosePlan(plan) {
+    if (!plan?.id) {
+      return;
+    }
+
+    setPendingCheckoutPlanId(plan.id);
+    setCheckoutPlans((currentPlans) => {
+      const existingPlan = findPlanById(currentPlans, plan.id);
+
+      return existingPlan
+        ? currentPlans.map((currentPlan) => (
+          normalizePlanKey(currentPlan.id) === normalizePlanKey(plan.id)
+            ? { ...currentPlan, ...plan }
+            : currentPlan
+        ))
+        : [...currentPlans, plan];
+    });
+    setCheckoutError("");
+
+    if (!currentUser) {
+      setShowAuth(true);
+    }
+  }
+
+  function clearPendingCheckout() {
+    setPendingCheckoutPlanId("");
+    setCheckoutError("");
+    setIsStartingCheckout(false);
+    setIsLoadingCheckoutPlan(false);
   }
 
   useEffect(() => {
@@ -55,76 +172,145 @@ export default function App() {
       setResumeData(null);
       setProfile(null);
       setFavoriteJobs([]);
+      setHasRestoredFlow(false);
       return;
     }
 
-    const saved = window.localStorage.getItem(`ajuma-flow:${currentUser.uid}`);
+    let isMounted = true;
+    setHasRestoredFlow(false);
 
-    if (!saved) {
-      setAppStep("onboarding");
-      setOnboardingData(null);
-      setResumeData(null);
-      setProfile(null);
-      setFavoriteJobs([]);
-      return;
+    async function restoreFlow() {
+      const localFlow = getStoredFlow(currentUser.uid);
+
+      if (localFlow && isMounted) {
+        applySavedFlow(localFlow);
+      }
+
+      try {
+        const response = await fetchSavedFlow();
+        const remoteFlow = response.flow;
+
+        if (isMounted && remoteFlow) {
+          applySavedFlow(remoteFlow);
+          window.localStorage.setItem(`ajuma-flow:${currentUser.uid}`, JSON.stringify(remoteFlow));
+        }
+
+        if (isMounted && !remoteFlow && !localFlow) {
+          setAppStep("onboarding");
+          setOnboardingData(null);
+          setResumeData(null);
+          setProfile(null);
+          setFavoriteJobs([]);
+        }
+      } catch (error) {
+        console.error("Saved setup restore failed", error);
+
+        if (isMounted && !localFlow) {
+          setAppStep("onboarding");
+          setOnboardingData(null);
+          setResumeData(null);
+          setProfile(null);
+          setFavoriteJobs([]);
+        }
+      } finally {
+        if (isMounted) {
+          setHasRestoredFlow(true);
+        }
+      }
     }
 
-    try {
-      const parsed = JSON.parse(saved);
-      const restoredOnboarding = parsed.onboardingData || null;
-      const restoredResume = parsed.resumeData || null;
-      const restoredProfile = parsed.profile || null;
-      const restoredFavoriteJobs = Array.isArray(parsed.favoriteJobs)
-        ? parsed.favoriteJobs
-        : [];
+    restoreFlow();
 
-      // Infer the safest next step so returning users can continue quickly.
-      const hasUsableResumeText = Boolean(restoredResume?.resumeText);
-      const inferredStep = restoredProfile
-        ? "jobs"
-        : hasUsableResumeText
-          ? "profile"
-          : restoredResume?.extractionFailed
-            ? "starterCv"
-            : restoredOnboarding?.hasCv === "yes"
-              ? "upload"
-              : restoredOnboarding
-                ? "starterCv"
-                : "onboarding";
-
-      const savedStep = parsed.appStep;
-      const shouldUseInferredStep = !savedStep || (
-        savedStep === "onboarding" &&
-        restoredOnboarding?.hasCv === "yes" &&
-        !restoredResume
-      );
-
-      setAppStep(shouldUseInferredStep ? inferredStep : savedStep);
-      setOnboardingData(restoredOnboarding);
-      setResumeData(restoredResume);
-      setProfile(restoredProfile);
-      setFavoriteJobs(restoredFavoriteJobs);
-    } catch (_error) {
-      window.localStorage.removeItem(`ajuma-flow:${currentUser.uid}`);
-    }
+    return () => {
+      isMounted = false;
+    };
   }, [currentUser]);
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser || !hasRestoredFlow) {
       return;
     }
 
-    window.localStorage.setItem(
-      `ajuma-flow:${currentUser.uid}`,
-      JSON.stringify({
-        appStep,
-        onboardingData,
-        resumeData,
-        profile,
-        favoriteJobs
-      })
-    );
-  }, [appStep, currentUser, favoriteJobs, onboardingData, profile, resumeData]);
+    const flow = {
+      appStep,
+      onboardingData,
+      resumeData,
+      profile,
+      favoriteJobs
+    };
+
+    window.localStorage.setItem(`ajuma-flow:${currentUser.uid}`, JSON.stringify(flow));
+    saveFlow(flow).catch((error) => {
+      console.error("Saved setup sync failed", error);
+    });
+  }, [appStep, currentUser, favoriteJobs, hasRestoredFlow, onboardingData, profile, resumeData]);
+
+  useEffect(() => {
+    if (!currentUser || !pendingCheckoutPlanId) {
+      return undefined;
+    }
+
+    let isMounted = true;
+    setIsLoadingCheckoutPlan(true);
+
+    async function loadCheckoutPlans() {
+      try {
+        const response = await fetchPublicPlans();
+
+        if (isMounted) {
+          setCheckoutPlans(response.plans || []);
+          setCheckoutError("");
+        }
+      } catch (error) {
+        console.error("Checkout plan load failed", error);
+
+        if (isMounted) {
+          setCheckoutError("Unable to load the latest plan details.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCheckoutPlan(false);
+        }
+      }
+    }
+
+    loadCheckoutPlans();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, pendingCheckoutPlanId]);
+
+  async function startPendingCheckout() {
+    if (!pendingCheckoutPlanId) {
+      return;
+    }
+
+    const email = auth.currentUser?.email || currentUser?.email;
+
+    if (!email) {
+      setCheckoutError("We need your account email before starting payment.");
+      return;
+    }
+
+    setCheckoutError("");
+    setIsStartingCheckout(true);
+
+    try {
+      const response = await initializePayment(pendingCheckoutPlanId, email);
+      const authorizationUrl = response?.payment?.authorizationUrl || response?.paystack?.authorization_url;
+
+      if (!authorizationUrl) {
+        throw new Error("Payment link is missing from the Paystack response.");
+      }
+
+      window.location.assign(authorizationUrl);
+    } catch (error) {
+      console.error("Landing checkout failed", error);
+      setCheckoutError(error.message || "Unable to start payment right now.");
+      setIsStartingCheckout(false);
+    }
+  }
 
   if (isPaymentCallback) {
     return <PaymentCallback />;
@@ -228,6 +414,54 @@ export default function App() {
             />
           ) : null}
         </main>
+
+        {pendingCheckoutPlanId ? (
+          <div className="auth-overlay" role="presentation" onClick={clearPendingCheckout}>
+            <div className="auth-modal checkout-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+              <p className="section-label section-label-pricing">Confirm Plan</p>
+              <h2>Complete payment before CV setup.</h2>
+
+              {isLoadingCheckoutPlan ? (
+                <p className="auth-intro">Loading the latest price and credit details...</p>
+              ) : pendingCheckoutPlan ? (
+                <>
+                  <p className="auth-intro">
+                    You selected {pendingCheckoutPlan.name}. Confirm the package below, then continue to Paystack.
+                  </p>
+
+                  <div className="checkout-summary">
+                    <span>{pendingCheckoutPlan.name}</span>
+                    <strong>{formatPlanPrice(pendingCheckoutPlan)}</strong>
+                    <p>{getPlanCreditsLabel(pendingCheckoutPlan)}</p>
+                  </div>
+                </>
+              ) : (
+                <p className="auth-intro">This plan is not available right now.</p>
+              )}
+
+              {checkoutError ? <p className="auth-error">{checkoutError}</p> : null}
+
+              <div className="profile-actions">
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={clearPendingCheckout}
+                  disabled={isStartingCheckout}
+                >
+                  Choose Later
+                </button>
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={startPendingCheckout}
+                  disabled={isLoadingCheckoutPlan || isStartingCheckout || !pendingCheckoutPlan}
+                >
+                  {isStartingCheckout ? "Redirecting to Paystack..." : "Continue to Paystack"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -236,7 +470,11 @@ export default function App() {
     <LandingPage
       currentUser={currentUser}
       showAuth={showAuth}
-      onCloseAuth={() => setShowAuth(false)}
+      onChoosePlan={handleChoosePlan}
+      onCloseAuth={() => {
+        setShowAuth(false);
+        clearPendingCheckout();
+      }}
       onSignIn={() => setShowAuth(true)}
     />
   );

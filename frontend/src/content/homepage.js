@@ -33,43 +33,60 @@ export const solutionCards = [
 
 export const pricingPlans = [
   {
+    id: "starter",
+    code: "starter",
     name: "Starter",
-    price: "GHS 1",
-    cadence: "/month",
-    description: "A simple way to set up your profile, upload your CV, and submit your first applications.",
+    amount: 5,
+    currency: "GHS",
+    credits: 3,
+    price: "GHS 5",
+    cadence: "",
+    sortOrder: 1,
+    description: "Unlock 3 Applications",
     features: [
-      "Up to 3 applications each month",
+      "3 applications",
       "Basic profile creation",
       "CV upload and parsing",
       "Basic job matching"
     ]
   },
   {
-    name: "Pro",
+    id: "standard",
+    code: "standard",
+    name: "Standard",
+    amount: 10,
+    currency: "GHS",
+    credits: 7,
     price: "GHS 10",
-    cadence: "/month",
-    description: "For active job seekers who want stronger application quality, better matching, and a smoother workflow.",
+    cadence: "",
+    sortOrder: 2,
+    description: "Unlock 7 Applications",
     featured: true,
     features: [
-      "Up to 20 applications each month",
+      "7 applications",
       "AI-optimized CV and profile",
       "Stronger job matching",
-      "Saved jobs and tracking",
-      "Priority application workflow"
+      "Saved jobs and tracking"
     ]
   },
   {
-    name: "Advanced",
+    id: "pro",
+    code: "pro",
+    name: "Pro",
+    amount: 20,
+    currency: "GHS",
+    credits: 20,
     price: "GHS 20",
-    cadence: "/month",
-    description: "For high-volume job seekers who want more capacity, stronger priority, and a faster way to stay consistent.",
+    cadence: "",
+    sortOrder: 3,
+    description: "Unlock 20 Applications",
     theme: "dark",
     features: [
-      "Up to 50 applications each month",
+      "20 applications",
       "Priority matching",
       "Advanced CV and profile refinement",
       "Faster application workflow",
-      "Best for high-volume searches"
+      "Best for active searches"
     ]
   }
 ];
