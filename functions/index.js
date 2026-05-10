@@ -587,6 +587,58 @@ function isValidPaystackSignature(rawBody, signature) {
   return expectedSignature === signature;
 }
 
+function parseMultipartForm(req) {
+  return new Promise((resolve, reject) => {
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        files: 1,
+        fileSize: 5 * 1024 * 1024 // 5MB
+      }
+    });
+
+    let uploadedFile = null;
+
+    busboy.on("file", (fieldname, file, info) => {
+      const { filename, mimeType } = info;
+      const chunks = [];
+
+      file.on("data", (chunk) => {
+        chunks.push(chunk);
+      });
+
+      file.on("limit", () => {
+        reject(new Error("File is too large. Maximum allowed size is 5MB."));
+      });
+
+      file.on("end", () => {
+        uploadedFile = {
+          fieldname,
+          originalname: filename,
+          filename,
+          mimetype: mimeType,
+          mimeType,
+          buffer: Buffer.concat(chunks)
+        };
+
+        uploadedFile.size = uploadedFile.buffer.length;
+      });
+    });
+
+    busboy.on("error", reject);
+
+    busboy.on("finish", () => {
+      resolve(uploadedFile);
+    });
+
+    if (req.rawBody) {
+      busboy.end(req.rawBody);
+    } else {
+      req.pipe(busboy);
+    }
+  });
+}
+
 app.use(cors({
   origin(origin, callback) {
     const uniqueAllowedOrigins = new Set(allowedOrigins);
@@ -682,19 +734,29 @@ router.put("/me/flow", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-router.post("/resume/upload", verifyFirebaseToken, upload.single("resume"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "Resume file is required." });
-  }
+router.post("/resume/upload", verifyFirebaseToken, async (req, res) => {
+  let uploadedFile;
 
   try {
-    const extractedText = await extractResumeText(req.file);
-    const filename = req.file.originalname.toLowerCase();
+    uploadedFile = await parseMultipartForm(req);
+
+    if (!uploadedFile) {
+      return res.status(400).json({ error: "Resume file is required." });
+    }
+
+    if (uploadedFile.fieldname !== "resume") {
+      return res.status(400).json({
+        error: "Invalid upload field. Expected field name 'resume'."
+      });
+    }
+
+    const extractedText = await extractResumeText(uploadedFile);
+    const filename = uploadedFile.originalname.toLowerCase();
     const supportedFormat = filename.endsWith(".pdf") || filename.endsWith(".docx");
 
     return res.status(201).json({
-      filename: req.file.originalname,
-      size: req.file.size,
+      filename: uploadedFile.originalname,
+      size: uploadedFile.size,
       extractedText,
       hasParsedText: Boolean(extractedText),
       supportedFormat,
@@ -703,10 +765,14 @@ router.post("/resume/upload", verifyFirebaseToken, upload.single("resume"), asyn
         : "Resume uploaded, but we could not extract enough usable text. Continue to the manual CV step to add your details."
     });
   } catch (error) {
-    console.error("Resume upload parsing failed:", error);
+    console.error("Resume upload parsing failed:", {
+      message: error.message,
+      stack: error.stack
+    });
+
     return res.status(201).json({
-      filename: req.file.originalname,
-      size: req.file.size,
+      filename: uploadedFile?.originalname || "resume",
+      size: uploadedFile?.size || 0,
       extractedText: "",
       hasParsedText: false,
       supportedFormat: false,
@@ -968,4 +1034,10 @@ app.use("/", router);
 app.use("/api", router);
 
 exports.app = app;
-exports.api = onRequest({ region: "us-central1" }, app);
+exports.api = onRequest(
+  {
+    region: "us-central1",
+    secrets: ["OPENAI_API_KEY", "PAYSTACK_SECRET_KEY"]
+  },
+  app
+);
