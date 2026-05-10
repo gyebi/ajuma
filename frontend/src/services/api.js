@@ -1,6 +1,6 @@
 import { auth } from "../firebase";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 async function getToken() {
   const user = auth.currentUser;
@@ -8,11 +8,13 @@ async function getToken() {
   return await user.getIdToken();
 }
 
-function getBackendUrl(path) {
-  if (!BASE_URL) {
-    throw new Error("Backend URL is missing. Set VITE_BACKEND_URL in the frontend production environment.");
-  }
+function createApiError(message, details = {}) {
+  const error = new Error(message);
+  Object.assign(error, details);
+  return error;
+}
 
+function getBackendUrl(path) {
   return `${BASE_URL}${path}`;
 }
 
@@ -46,11 +48,19 @@ async function parseApiResponse(res, path, url, method, kind) {
     bodyPreview: bodyText.slice(0, 160)
   });
 
-  throw new Error(
-    bodyText.includes("<!doctype html") || bodyText.includes("<html")
-      ? `Unexpected HTML response from ${path}. Check VITE_BACKEND_URL and Hosting rewrites.`
-      : `Unexpected response from ${path} (${res.status}).`
-  );
+  if (bodyText.includes("<!doctype html") || bodyText.includes("<html")) {
+    throw createApiError(`Unexpected HTML response from ${path}. Check VITE_API_BASE_URL and Hosting rewrites.`, {
+      code: "API_HTML_RESPONSE",
+      section: "hosting_rewrite",
+      status: res.status
+    });
+  }
+
+  throw createApiError(`Unexpected response from ${path} (${res.status}).`, {
+    code: "API_NON_JSON_RESPONSE",
+    section: "api_response",
+    status: res.status
+  });
 }
 
 export async function apiFetch(path, options = {}) {
@@ -63,8 +73,8 @@ export async function apiFetch(path, options = {}) {
       ...options,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...(options.headers || {})
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`
       }
     });
   } catch (error) {
@@ -74,7 +84,11 @@ export async function apiFetch(path, options = {}) {
       method: options.method || "GET",
       error
     });
-    throw new Error(`Network error while calling ${path}`);
+    throw createApiError(`Network error while calling ${path}`, {
+      code: "API_NETWORK_ERROR",
+      section: "network",
+      cause: error
+    });
   }
 
   const data = await parseApiResponse(res, path, url, options.method || "GET", "");
@@ -87,7 +101,11 @@ export async function apiFetch(path, options = {}) {
       status: res.status,
       response: data
     });
-    throw new Error(data.error || `Request failed for ${path}`);
+    throw createApiError(data.error || `Request failed for ${path}`, {
+      code: data.code || "API_REQUEST_FAILED",
+      section: data.section || "api",
+      status: res.status
+    });
   }
 
   console.info("API request succeeded", {
@@ -119,7 +137,11 @@ export async function publicApiFetch(path, options = {}) {
       method: options.method || "GET",
       error
     });
-    throw new Error(`Network error while calling ${path}`);
+    throw createApiError(`Network error while calling ${path}`, {
+      code: "API_NETWORK_ERROR",
+      section: "network",
+      cause: error
+    });
   }
 
   const data = await parseApiResponse(res, path, url, options.method || "GET", "Public");
@@ -132,7 +154,11 @@ export async function publicApiFetch(path, options = {}) {
       status: res.status,
       response: data
     });
-    throw new Error(data.error || `Request failed for ${path}`);
+    throw createApiError(data.error || `Request failed for ${path}`, {
+      code: data.code || "API_REQUEST_FAILED",
+      section: data.section || "api",
+      status: res.status
+    });
   }
 
   console.info("Public API request succeeded", {
@@ -155,8 +181,8 @@ export async function apiFetchForm(path, formData, options = {}) {
       ...options,
       body: formData,
       headers: {
-        Authorization: `Bearer ${token}`,
-        ...(options.headers || {})
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`
       }
     });
   } catch (error) {
@@ -166,7 +192,11 @@ export async function apiFetchForm(path, formData, options = {}) {
       method: options.method || "POST",
       error
     });
-    throw new Error(`Network error while uploading to ${path}`);
+    throw createApiError(`Network error while uploading to ${path}`, {
+      code: "FORM_NETWORK_ERROR",
+      section: "network",
+      cause: error
+    });
   }
 
   const data = await parseApiResponse(res, path, url, options.method || "POST", "Form");
@@ -179,7 +209,11 @@ export async function apiFetchForm(path, formData, options = {}) {
       status: res.status,
       response: data
     });
-    throw new Error(data.error || `Request failed for ${path}`);
+    throw createApiError(data.error || `Request failed for ${path}`, {
+      code: data.code || "FORM_REQUEST_FAILED",
+      section: data.section || "upload_api",
+      status: res.status
+    });
   }
 
   console.info("Form API request succeeded", {

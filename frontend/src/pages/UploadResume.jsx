@@ -2,15 +2,58 @@
 import { useState } from "react";
 import { apiFetchForm } from "../services/api";
 
+const allowedResumeExtensions = [".pdf", ".doc", ".docx"];
+
+function isSupportedResumeFile(file) {
+  const filename = file?.name?.toLowerCase() || "";
+
+  return allowedResumeExtensions.some((extension) => filename.endsWith(extension));
+}
+
+function getUploadErrorMessage(error) {
+  if (error.code === "API_HTML_RESPONSE") {
+    return "The upload reached the website instead of the API. Check the Firebase /api rewrite and redeploy hosting/functions.";
+  }
+
+  if (error.code === "FORM_NETWORK_ERROR") {
+    return "The upload could not reach the API. Check your connection, CORS, and the deployed Functions URL.";
+  }
+
+  if (error.status === 401) {
+    return "Your sign-in session expired. Please sign in again, then retry the upload.";
+  }
+
+  if (error.status === 400) {
+    return error.message || "The API did not receive the resume file. Check the upload field name and file type.";
+  }
+
+  if (error.status >= 500) {
+    return "The API received the upload but failed while processing it. Check the Functions logs for the resume parser.";
+  }
+
+  return error.message || "Unable to upload your CV right now. Please try again.";
+}
+
 export default function UploadResume({ onNext, onNeedsManualEntry }) {
   const [file, setFile] = useState(null);
   const [uploadMessage, setUploadMessage] = useState("");
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  function chooseFile(nextFile) {
+    setError("");
+    setUploadMessage("");
+    setFile(nextFile || null);
+  }
+
   const upload = async () => {
     if (!file) {
       setError("Please choose a resume file first.");
+      return;
+    }
+
+    if (!isSupportedResumeFile(file)) {
+      setError("Please upload your CV as a PDF, DOC, or DOCX file.");
       return;
     }
 
@@ -57,9 +100,12 @@ export default function UploadResume({ onNext, onNeedsManualEntry }) {
     } catch (uploadError) {
       console.error("Resume upload failed", {
         filename: file.name,
+        section: uploadError.section || "unknown",
+        code: uploadError.code || "unknown",
+        status: uploadError.status || null,
         error: uploadError
       });
-      setError(uploadError.message);
+      setError(getUploadErrorMessage(uploadError));
     } finally {
       setIsUploading(false);
     }
@@ -81,10 +127,12 @@ export default function UploadResume({ onNext, onNeedsManualEntry }) {
             className="upload-input"
             type="file"
             accept=".pdf,.doc,.docx"
-            onChange={(event) => setFile(event.target.files[0])}
+            onChange={(event) => chooseFile(event.target.files[0])}
           />
           <span className="upload-badge">Upload Resume </span>
-          <strong>{file ? file.name : "Choose a resume file"}</strong>
+          <strong className="upload-file-name" title={file ? file.name : ""}>
+            {file ? file.name : "Choose a resume file"}
+          </strong>
           {!file ? (
             <p>Upload a PDF, DOC, or DOCX file.</p>
           ) : null}

@@ -14,9 +14,9 @@
     "tunnel:backend": "ngrok start backend",
     "tunnel": "ngrok start --all",
     "dev:tunnel": "concurrently \"npm run dev\" \"npm run tunnel\"",
-    "build": "npm run build --workspace frontend && npm run build --workspace backend",
+    "build": "npm run build --workspace frontend && npm run build --workspace backend && npm run build --prefix functions",
     "start": "npm run start --workspace backend",
-    "lint": "npm run lint --workspace frontend && npm run lint --workspace backend"
+    "lint": "npm run lint --workspace frontend && npm run lint --workspace backend && npm run lint --prefix functions"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

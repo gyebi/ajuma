@@ -5,6 +5,27 @@ import {
   signInWithEmailAndPassword
 } from "firebase/auth";
 
+function getAuthErrorMessage(error, mode) {
+  const code = error?.code || "";
+
+  const messages = {
+    "auth/invalid-credential": "The email or password you entered is incorrect. Please check your details and try again.",
+    "auth/user-not-found": "No account was found with that email address.",
+    "auth/wrong-password": "The email or password you entered is incorrect. Please check your details and try again.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/email-already-in-use": "An account with this email already exists. Try signing in instead.",
+    "auth/weak-password": "Please choose a stronger password with at least 6 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment, then try again.",
+    "auth/network-request-failed": "We could not reach the sign-in service. Please check your connection and try again."
+  };
+
+  return messages[code] || (
+    mode === "signin"
+      ? "We could not sign you in. Please check your details and try again."
+      : "We could not create your account right now. Please check your details and try again."
+  );
+}
+
 export default function Login({ onClose, onLogin }) {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
@@ -25,7 +46,7 @@ export default function Login({ onClose, onLogin }) {
 
       onLogin();
     } catch (authError) {
-      setError(authError.message || "Unable to continue. Please try again.");
+      setError(getAuthErrorMessage(authError, mode));
     } finally {
       setIsSubmitting(false);
     }

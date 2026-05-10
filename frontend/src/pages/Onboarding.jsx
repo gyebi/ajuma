@@ -144,7 +144,7 @@ export default function Onboarding({ initialData, onContinue }) {
             type="button"
             onClick={() => updateField("hasCv", "yes")}
           >
-            <strong>I already have a CV</strong>
+            <strong>Upload CV</strong>
             <span>Upload it and continue faster.</span>
           </button>
 
@@ -153,7 +153,7 @@ export default function Onboarding({ initialData, onContinue }) {
             type="button"
             onClick={() => updateField("hasCv", "no")}
           >
-            <strong>I need help creating one</strong>
+            <strong>Generate CV</strong>
             <span>Use Ajuma AI to generate a starter CV.</span>
           </button>
         </div>

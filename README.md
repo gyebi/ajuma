@@ -47,6 +47,7 @@ The backend currently includes the API surface explicitly mentioned in the docs:
 - `GET /payments/verify/:reference`
 - `GET /payments/mine`
 - `POST /payments/webhook`
+- `POST /webhooks/paystack`
 
 Protected routes require a verified Firebase ID token on the backend, and abuse-prone endpoints are covered by rate limiting. Firebase app initialization on the frontend is singleton-safe to avoid duplicate initialization during reloads.
 
@@ -60,7 +61,17 @@ The app currently uses three application-credit plans from the landing page and 
 
 ## Production Setup Notes
 
-1. Set `FRONTEND_ORIGIN` on the backend to the production frontend domain.
-2. Set `PAYSTACK_CALLBACK_URL` to `https://your-domain.com/payment/callback`.
-3. Add the production domain to Firebase Authentication authorized domains.
-4. Keep `VITE_BACKEND_URL` in the frontend production environment pointed at the deployed backend.
+Use these live URLs:
+
+- Frontend: `https://www.ajuma-ai.com`
+- Backend/API: `https://api.ajuma-ai.com`
+- Paystack callback: `https://www.ajuma-ai.com/payment/callback`
+- Paystack webhook: `https://api.ajuma-ai.com/webhooks/paystack`
+
+Set production environment variables:
+
+- Backend `FRONTEND_ORIGIN=https://www.ajuma-ai.com`
+- Backend `PAYSTACK_CALLBACK_URL=https://www.ajuma-ai.com/payment/callback`
+- Frontend `VITE_API_BASE_URL=/api`
+
+Also add `www.ajuma-ai.com` to Firebase Authentication authorized domains and configure the Paystack dashboard webhook URL to `https://api.ajuma-ai.com/webhooks/paystack`.

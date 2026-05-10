@@ -19,6 +19,16 @@ The experience should stay lightweight, avoid boring users with too many steps, 
 - Profile editing should be lightweight, not a full resume-builder experience.
 - Jobs should appear after an intentional button click.
 
+## Backend Direction
+
+Ajuma AI uses Firebase Hosting and Firebase Functions as the production backend path for the live domains `ajuma-ai.com` and `www.ajuma-ai.com`.
+
+The Express API exported from `functions/index.js` is the active backend implementation. The local `backend/src/server.js` starts that same Express app for development, so local testing and production use the same route behavior instead of maintaining two separate backend implementations.
+
+Development should use `npm run dev` from the repository root. The frontend keeps `VITE_API_BASE_URL=/api`, and Vite proxies `/api` to the local backend on port `3001`. Production Firebase Hosting rewrites `/api/**` to the deployed `api` Cloud Function.
+
+Keep future backend changes in the shared Functions Express app path first. The old standalone backend modules can either be removed after parity is confirmed or used as reference material while the Functions app is split into smaller modules.
+
 ## End-to-End Flow
 
 ```text

@@ -177,12 +177,34 @@ button {
 
 .choice-card {
   display: grid;
-  gap: 8px;
-  padding: 20px;
-  border: 1px solid rgba(17, 17, 17, 0.1);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  text-align: left;
+  justify-items: center;
+  gap: 10px;
+  min-height: 132px;
+  padding: 22px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  text-align: center;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.choice-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(17, 17, 17, 0.18);
+  box-shadow: 0 14px 30px rgba(17, 17, 17, 0.06);
+}
+
+.choice-card strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #1f2e41;
+  color: #ffffff;
+  font-size: 1rem;
 }
 
 .choice-card span {
@@ -190,8 +212,12 @@ button {
 }
 
 .choice-card-active {
-  border-color: rgba(17, 17, 17, 0.22);
-  background: linear-gradient(180deg, rgba(255, 233, 205, 0.68), rgba(255, 255, 255, 0.92));
+  border-color: rgba(36, 123, 99, 0.4);
+  background: linear-gradient(180deg, rgba(224, 245, 237, 0.82), rgba(255, 255, 255, 0.94));
+}
+
+.choice-card-active strong {
+  background: #247b63;
 }
 
 .app-cta {
@@ -235,8 +261,16 @@ button {
 }
 
 .upload-dropzone strong {
+  max-width: 100%;
   font-size: 1.3rem;
   letter-spacing: -0.03em;
+}
+
+.upload-file-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .upload-dropzone p {
