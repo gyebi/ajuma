@@ -45,6 +45,23 @@ function getStoredFlow(userId) {
   }
 }
 
+function hasPostPaymentApplicationsIntent() {
+  const searchParams = new URLSearchParams(window.location.search);
+  return (
+    searchParams.get("workflow") === "applications"
+    || window.localStorage.getItem("ajuma-post-payment-intent") === "applications"
+  );
+}
+
+function clearPostPaymentApplicationsIntent() {
+  window.localStorage.removeItem("ajuma-post-payment-intent");
+
+  if (window.location.search.includes("workflow=applications")) {
+    const nextUrl = `${window.location.pathname}${window.location.hash}`;
+    window.history.replaceState({}, "", nextUrl || "/");
+  }
+}
+
 function inferStepFromFlow(flow = {}) {
   const restoredOnboarding = flow.onboardingData || null;
   const restoredResume = flow.resumeData || null;
@@ -64,8 +81,29 @@ function inferStepFromFlow(flow = {}) {
             : "onboarding";
 }
 
+function inferApplicationsStepFromFlow(flow = {}) {
+  const restoredOnboarding = flow.onboardingData || null;
+  const restoredResume = flow.resumeData || null;
+  const restoredProfile = flow.profile || null;
+  const hasUsableResumeText = Boolean(restoredResume?.resumeText);
+
+  return restoredProfile
+    ? "jobs"
+    : hasUsableResumeText
+      ? "profile"
+      : restoredResume?.extractionFailed
+        ? "starterCv"
+        : restoredOnboarding?.hasCv === "yes"
+          ? "upload"
+          : restoredOnboarding
+            ? "starterCv"
+            : "onboarding";
+}
+
 export default function App() {
-  const isPaymentCallback = window.location.pathname === "/payment/callback";
+  const searchParams = new URLSearchParams(window.location.search);
+  const hasPaymentReference = Boolean(searchParams.get("reference") || searchParams.get("trxref"));
+  const isPaymentCallback = window.location.pathname === "/payment/callback" || hasPaymentReference;
   const [showAuth, setShowAuth] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [appStep, setAppStep] = useState("onboarding");
@@ -89,7 +127,7 @@ export default function App() {
     setAppStep("onboarding");
   }
 
-  function applySavedFlow(flow) {
+  function applySavedFlow(flow, options = {}) {
     const restoredOnboarding = flow?.onboardingData || null;
     const restoredResume = flow?.resumeData || null;
     const restoredProfile = flow?.profile || null;
@@ -105,7 +143,13 @@ export default function App() {
       !restoredResume
     );
 
-    setAppStep(shouldUseInferredStep ? inferredStep : savedStep);
+    setAppStep(
+      options.preferApplications
+        ? inferApplicationsStepFromFlow(flow)
+        : shouldUseInferredStep
+          ? inferredStep
+          : savedStep
+    );
     setOnboardingData(restoredOnboarding);
     setResumeData(restoredResume);
     setProfile(restoredProfile);
@@ -181,9 +225,10 @@ export default function App() {
 
     async function restoreFlow() {
       const localFlow = getStoredFlow(currentUser.uid);
+      const shouldContinueToApplications = hasPostPaymentApplicationsIntent();
 
       if (localFlow && isMounted) {
-        applySavedFlow(localFlow);
+        applySavedFlow(localFlow, { preferApplications: shouldContinueToApplications });
       }
 
       try {
@@ -191,7 +236,7 @@ export default function App() {
         const remoteFlow = response.flow;
 
         if (isMounted && remoteFlow) {
-          applySavedFlow(remoteFlow);
+          applySavedFlow(remoteFlow, { preferApplications: shouldContinueToApplications });
           window.localStorage.setItem(`ajuma-flow:${currentUser.uid}`, JSON.stringify(remoteFlow));
         }
 
@@ -214,6 +259,10 @@ export default function App() {
         }
       } finally {
         if (isMounted) {
+          if (shouldContinueToApplications) {
+            clearPostPaymentApplicationsIntent();
+          }
+
           setHasRestoredFlow(true);
         }
       }

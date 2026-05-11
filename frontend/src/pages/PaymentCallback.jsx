@@ -80,7 +80,8 @@ export default function PaymentCallback() {
         setPayment(verification.payment || null);
         setEntitlement(verification.entitlement || null);
         setStatus("success");
-        setMessage("Payment verified successfully.");
+        setMessage("Payment verified successfully. Continue to applications to use your credits.");
+        window.localStorage.setItem("ajuma-post-payment-intent", "applications");
 
         try {
           const entitlementResponse = await fetchMyEntitlement();
@@ -138,10 +139,10 @@ export default function PaymentCallback() {
           className="button button-primary"
           type="button"
           onClick={() => {
-            window.location.assign("/");
+            window.location.assign(new URL("/?workflow=applications", window.location.origin).toString());
           }}
         >
-          Return to app
+          Continue to Applications
         </button>
       </section>
     </main>

@@ -2,8 +2,11 @@ import { useState } from "react";
 import { auth } from "../firebase";
 import {
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword
 } from "firebase/auth";
+
+const PASSWORD_RESET_CONTINUE_URL = "https://www.ajuma-ai.com/";
 
 function getAuthErrorMessage(error, mode) {
   const code = error?.code || "";
@@ -26,22 +29,42 @@ function getAuthErrorMessage(error, mode) {
   );
 }
 
+function getPasswordResetErrorMessage(error) {
+  const code = error?.code || "";
+
+  const messages = {
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/missing-email": "Enter your email address first, then request a reset link.",
+    "auth/too-many-requests": "Too many reset attempts. Please wait a moment, then try again.",
+    "auth/network-request-failed": "We could not reach the password reset service. Please check your connection and try again.",
+    "auth/unauthorized-continue-uri": "Password reset is not fully configured for this domain yet.",
+    "auth/invalid-continue-uri": "Password reset is not fully configured for this domain yet."
+  };
+
+  return messages[code] || "We could not send the password reset email right now. Please try again.";
+}
+
 export default function Login({ onClose, onLogin }) {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   async function submit() {
+    const trimmedEmail = email.trim();
+
     setError("");
+    setNotice("");
     setIsSubmitting(true);
 
     try {
       if (mode === "signin") {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, trimmedEmail, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, trimmedEmail, password);
       }
 
       onLogin();
@@ -49,6 +72,32 @@ export default function Login({ onClose, onLogin }) {
       setError(getAuthErrorMessage(authError, mode));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    const trimmedEmail = email.trim();
+
+    setError("");
+    setNotice("");
+
+    if (!trimmedEmail) {
+      setError("Enter your email address first, then request a reset link.");
+      return;
+    }
+
+    setIsSendingReset(true);
+
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail, {
+        url: PASSWORD_RESET_CONTINUE_URL,
+        handleCodeInApp: false
+      });
+      setNotice("If an account exists for that email, we will send a password reset link.");
+    } catch (authError) {
+      setError(getPasswordResetErrorMessage(authError));
+    } finally {
+      setIsSendingReset(false);
     }
   }
 
@@ -92,7 +141,10 @@ export default function Login({ onClose, onLogin }) {
             type="email"
             placeholder="you@example.com"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setNotice("");
+            }}
           />
         </label>
 
@@ -107,6 +159,7 @@ export default function Login({ onClose, onLogin }) {
         </label>
 
         {error ? <p className="auth-error">{error}</p> : null}
+        {notice ? <p className="auth-success">{notice}</p> : null}
 
         <button className="button button-primary auth-submit" type="button" onClick={submit} disabled={isSubmitting}>
           {isSubmitting
@@ -115,6 +168,17 @@ export default function Login({ onClose, onLogin }) {
               ? "Sign in"
               : "Create account"}
         </button>
+
+        {mode === "signin" ? (
+          <button
+            className="auth-link-button"
+            type="button"
+            onClick={sendPasswordReset}
+            disabled={isSubmitting || isSendingReset}
+          >
+            {isSendingReset ? "Sending reset link..." : "Forgot password?"}
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -207,23 +207,23 @@ export default function Jobs({
   const entitlementStatusText = !hasLoadedBillingOnce && isLoadingBilling
     ? "Checking your application credits..."
     : hasUnlockedApplications
-      ? `You can apply to jobs now with ${availableCredits ?? 0} credits available.`
+      ? `Applications are active with ${availableCredits ?? 0} credits available.`
       : "Choose a plan to unlock job applications.";
 
   const entitlementBannerCopy = !hasLoadedBillingOnce && isLoadingBilling
     ? "We are syncing your latest billing status so your unlock state stays accurate."
     : hasUnlockedApplications
-      ? "Your Paystack payment has unlocked your entitlement. Use your available credits to start applying."
+      ? "Your Paystack payment has unlocked your entitlement. Click Apply on any matched role to spend one credit and open the employer application."
       : "The jobs are visible immediately, but applications stay locked until a payment is verified and your entitlement is granted.";
 
   return (
     <section className="app-panel">
       <div className="app-panel-header">
-        <p className="section-label section-label-jobs">Matched Jobs</p>
-        <h1 className="app-title">Review roles aligned to your profile.</h1>
+        <p className="section-label section-label-jobs">Applications</p>
+        <h1 className="app-title">Apply to roles aligned to your profile.</h1>
         <p className="app-subtitle">
-          Your profile is ready. Ajuma is pulling matching opportunities for
-          you now.
+          Your profile is ready. Use one application credit each time you open
+          an employer application.
         </p>
       </div>
 
@@ -363,9 +363,9 @@ export default function Jobs({
 
             <div className="pricing-heading">
               <p className="section-label section-label-pricing">Unlock Applications</p>
-              <h2>Choose a plan to activate Apply.</h2>
+              <h2>Choose a plan to activate applications.</h2>
               <p className="pricing-intro">
-                Your jobs are already matched. Once payment is verified, your entitlement unlocks and the Apply button becomes active.
+                Your jobs are already matched. Once payment is verified, your entitlement unlocks and each Apply click uses one credit.
               </p>
             </div>
 

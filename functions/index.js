@@ -77,6 +77,9 @@ const allowedOrigins = [
   ...FRONTEND_ORIGIN.split(",").map((item) => item.trim()).filter(Boolean)
 ];
 
+const DEFAULT_PAYSTACK_CALLBACK_URL =
+  "https://www.ajuma-ai.com/payment/callback";
+
 function captureRawBody(req, _res, buffer) {
   if (buffer?.length) {
     req.rawBody = buffer.toString("utf8");
@@ -846,16 +849,24 @@ router.post("/payments/initialize", verifyFirebaseToken, async (req, res) => {
       return res.status(503).json({ error: "Paystack secret key is not configured yet." });
     }
 
-    const { planId, email } = req.body ?? {};
+    const { planId, email: requestedEmail } = req.body ?? {};
 
-    if (!planId || !email) {
-      return res.status(400).json({ error: "planId and email are required." });
+    if (!planId) {
+      return res.status(400).json({ error: "planId is required." });
     }
 
     const plan = await getPlanById(planId);
 
     if (!plan || plan.active === false) {
       return res.status(404).json({ error: "Active plan not found." });
+    }
+
+    const userEmail = req.user.email || requestedEmail;
+
+    if (!userEmail) {
+      return res.status(400).json({
+        error: "User email is required to initialize payment."
+      });
     }
 
     const amountMajor = resolvePlanAmount(plan);
@@ -866,13 +877,14 @@ router.post("/payments/initialize", verifyFirebaseToken, async (req, res) => {
     }
 
     const reference = buildReference(req.user.uid);
+    const callbackUrl = process.env.PAYSTACK_CALLBACK_URL || DEFAULT_PAYSTACK_CALLBACK_URL;
     const docRef = db.collection("payments").doc();
     const paymentRecord = {
       id: docRef.id,
       paymentId: docRef.id,
       userId: req.user.uid,
       planId: plan.id,
-      email,
+      email: userEmail,
       currency: plan.currency || "GHS",
       amount,
       amountMajor,
@@ -888,15 +900,17 @@ router.post("/payments/initialize", verifyFirebaseToken, async (req, res) => {
     const paystackResponse = await paystackRequest("/transaction/initialize", {
       method: "POST",
       body: JSON.stringify({
-        email,
+        email: userEmail,
         amount,
         reference,
-        callback_url: process.env.PAYSTACK_CALLBACK_URL || undefined,
+        callback_url: callbackUrl,
         currency: plan.currency || "GHS",
         metadata: {
           userId: req.user.uid,
           planId: plan.id,
-          paymentId: paymentRecord.id
+          paymentId: paymentRecord.id,
+          paymentReference: reference,
+          credits: resolvePlanCredits(plan)
         }
       })
     });

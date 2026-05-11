@@ -1358,8 +1358,29 @@ h1 {
   color: #a63c38;
 }
 
+.auth-success {
+  margin-bottom: 16px;
+  color: #247a4d;
+}
+
 .auth-submit {
   width: 100%;
+}
+
+.auth-link-button {
+  display: block;
+  margin: 14px auto 0;
+  padding: 4px 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.74);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.auth-link-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .pricing-card-dark .pricing-name,
