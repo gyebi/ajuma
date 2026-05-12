@@ -1,4 +1,6 @@
 import CTASection from "../components/home/CTASection";
+import Footer from "../components/Footer";
+import FloatingSmsBubble from "../components/FloatingSmsBubble";
 import HeroSection from "../components/home/HeroSection";
 import HowItWorksSection from "../components/home/HowItWorksSection";
 import PricingSection from "../components/home/PricingSection";
@@ -18,6 +20,9 @@ export default function LandingPage({ currentUser, showAuth, onChoosePlan, onClo
         <PricingSection onChoosePlan={onChoosePlan} />
         <CTASection onSignIn={onSignIn} />
       </main>
+
+      <Footer />
+      <FloatingSmsBubble />
 
       {showAuth ? (
         <Login
